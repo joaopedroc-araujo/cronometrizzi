@@ -1,5 +1,3 @@
-const t = TrelloPowerUp.iframe();
-
 const statusEl = document.getElementById("status");
 const button = document.getElementById("toggleButton");
 
@@ -14,8 +12,9 @@ function formatTime(ms) {
   )}:${String(seconds).padStart(2, "0")}`;
 }
 
-t.get("card", "shared", ["isRunning", "startTime"]).then(
-  ({ isRunning, startTime }) => {
+TrelloPowerUp.iframe()
+  .get("card", "shared", ["isRunning", "startTime"])
+  .then(({ isRunning, startTime }) => {
     if (isRunning) {
       const elapsed = Date.now() - startTime;
       statusEl.textContent = `Rodando: ${formatTime(elapsed)}`;
@@ -24,25 +23,27 @@ t.get("card", "shared", ["isRunning", "startTime"]).then(
       statusEl.textContent = "Parado";
       button.textContent = "Iniciar";
     }
-  }
-);
+  });
 
 button.addEventListener("click", () => {
-  t.get("card", "shared", "isRunning").then((isRunning) => {
-    if (isRunning) {
-      t.set("card", "shared", { isRunning: false }).then(() => {
-        statusEl.textContent = "Parado";
-        button.textContent = "Iniciar";
-        t.closePopup();
-      });
-    } else {
-      t.set("card", "shared", { isRunning: true, startTime: Date.now() }).then(
-        () => {
+  TrelloPowerUp.iframe()
+    .get("card", "shared", "isRunning")
+    .then((isRunning) => {
+      if (isRunning) {
+        t.set("card", "shared", { isRunning: false }).then(() => {
+          statusEl.textContent = "Parado";
+          button.textContent = "Iniciar";
+          t.closePopup();
+        });
+      } else {
+        t.set("card", "shared", {
+          isRunning: true,
+          startTime: Date.now(),
+        }).then(() => {
           statusEl.textContent = "Rodando...";
           button.textContent = "Parar";
           t.closePopup();
-        }
-      );
-    }
-  });
+        });
+      }
+    });
 });

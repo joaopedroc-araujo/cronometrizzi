@@ -7,27 +7,17 @@ TrelloPowerUp.initialize({
     },
   ],
   "card-badges": (t) =>
-    t
-      .get("card", "shared", ["isRunning", "startTime"])
-      .then(({ isRunning, startTime }) => {
-        if (!isRunning || !startTime) return [];
+    t.get("card", "shared", ["isRunning", "startTime"]).then((data) => {
+      const isRunning = data?.isRunning || false;
+      const startTime = data?.startTime || null;
 
+      if (isRunning && startTime) {
         const elapsed = Date.now() - startTime;
-        const totalSeconds = Math.floor(elapsed / 1000);
-        const hours = Math.floor(totalSeconds / 3600);
-        const minutes = Math.floor((totalSeconds % 3600) / 60);
-        const seconds = totalSeconds % 60;
-
-        return [
-          {
-            title: "Tempo Decorrido",
-            text: `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-              2,
-              "0"
-            )}:${String(seconds).padStart(2, "0")}`,
-            color: "green",
-            icon: "https://i.imgur.com/9ZZ8rf3.png",
-          },
-        ];
-      }),
+        statusEl.textContent = `Rodando: ${formatTime(elapsed)}`;
+        button.textContent = "Parar";
+      } else {
+        statusEl.textContent = "Parado";
+        button.textContent = "Iniciar";
+      }
+    }),
 });

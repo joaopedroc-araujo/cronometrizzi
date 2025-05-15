@@ -34,6 +34,22 @@ document.addEventListener("DOMContentLoaded", () => {
     return;
   }
 
+  const initializeStorage = async () => {
+    try {
+      const currentData = await t.get("card", "shared");
+      if (!currentData || typeof currentData !== "object") {
+        await t.set("card", "shared", {
+          isRunning: false,
+          startTime: 0,
+          lastUpdate: Date.now(),
+        });
+        console.log("Storage inicializado com valores padrão");
+      }
+    } catch (error) {
+      console.error("Falha na inicialização:", error);
+    }
+  };
+
   let updateInterval;
 
   function formatTime(ms) {
@@ -61,6 +77,15 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  const setupRealTimeUpdates = () => {
+    t.subscribe("shared", async (event) => {
+      console.log("Evento de atualização:", event);
+      if (event.event === "update") {
+        await updateTimeDisplay();
+      }
+    });
+  };
 
   // Iniciar atualizações contínuas se o cronômetro estiver rodando
   function startUpdating() {
@@ -96,29 +121,33 @@ document.addEventListener("DOMContentLoaded", () => {
 
   button.addEventListener("click", async () => {
     try {
+      await initializeStorage(); // Garantir inicialização
       const currentData = await t.get("card", "shared", [
         "isRunning",
         "startTime",
       ]);
-      console.log("Dados recuperados:", currentData);
 
-      if (currentData?.isRunning) {
-        await updateStorage({
+      console.log("Dados recuperados (pós-inicialização):", currentData);
+
+      if (currentData.isRunning) {
+        await t.set("card", "shared", {
           isRunning: false,
+          startTime: 0,
           lastUpdate: Date.now(),
         });
       } else {
-        await updateStorage({
+        await t.set("card", "shared", {
           isRunning: true,
           startTime: Date.now(),
           lastUpdate: Date.now(),
         });
       }
 
-      updateTimeDisplay();
+      // Forçar atualização imediata do contexto
+      t.render(() => updateTimeDisplay());
     } catch (error) {
-      console.error("Falha na operação:", error);
-      statusEl.textContent = `Erro: ${error.message}`;
+      console.error("Erro crítico:", error);
+      statusEl.textContent = `ERRO: ${error.message}`;
     }
   });
 
@@ -134,4 +163,6 @@ document.addEventListener("DOMContentLoaded", () => {
   window.addEventListener("unload", () => {
     stopUpdating();
   });
+
+  setupRealTimeUpdates();
 });

@@ -79,12 +79,11 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const setupRealTimeUpdates = () => {
-    t.subscribe("shared", async (event) => {
-      console.log("Evento de atualização:", event);
-      if (event.event === "update") {
-        await updateTimeDisplay();
-      }
-    });
+    setInterval(() => {
+      updateTimeDisplay();
+    }, 1000);
+
+    window.addEventListener("focus", updateTimeDisplay);
   };
 
   // Iniciar atualizações contínuas se o cronômetro estiver rodando
@@ -103,48 +102,44 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // Carregar estado inicial
-  t.get("card", "shared", ["isRunning", "startTime"]).then((data) => {
-    console.log("Dados carregados:", data);
-    const isRunning = data?.isRunning;
-    const startTime = data?.startTime;
+  t.get("card", "shared", ["isRunning", "startTime"])
+    .then((data) => {
+      const initialData = data || {
+        isRunning: false,
+        startTime: 0,
+      };
 
-    if (isRunning && startTime) {
-      const elapsed = Date.now() - startTime;
-      statusEl.textContent = `Rodando: ${formatTime(elapsed)}`;
-      button.textContent = "Parar";
-      startUpdating();
-    } else {
-      statusEl.textContent = "Parado";
-      button.textContent = "Iniciar";
-    }
-  });
+      if (initialData.isRunning && initialData.startTime > 0) {
+        startUpdating();
+      }
+
+      updateTimeDisplay();
+    })
+    .catch((error) => {
+      console.error("Erro na inicialização:", error);
+    });
 
   button.addEventListener("click", async () => {
     try {
-      await initializeStorage(); // Garantir inicialização
-      const currentData = await t.get("card", "shared", [
+      const currentData = (await t.get("card", "shared", [
         "isRunning",
         "startTime",
-      ]);
+      ])) || {
+        isRunning: false,
+        startTime: 0,
+      };
 
-      console.log("Dados recuperados (pós-inicialização):", currentData);
+      const newState = !currentData.isRunning;
 
-      if (currentData.isRunning) {
-        await t.set("card", "shared", {
-          isRunning: false,
-          startTime: 0,
-          lastUpdate: Date.now(),
-        });
-      } else {
-        await t.set("card", "shared", {
-          isRunning: true,
-          startTime: Date.now(),
-          lastUpdate: Date.now(),
-        });
-      }
+      await t.set("card", "shared", {
+        isRunning: newState,
+        startTime: newState ? Date.now() : 0,
+        lastUpdate: Date.now(),
+      });
 
-      // Forçar atualização imediata do contexto
-      t.render(() => updateTimeDisplay());
+      // Forçar atualização imediata
+      updateTimeDisplay();
+      t.closePopup().catch(() => {}); // Fechar popup sem erro se já estiver fechado
     } catch (error) {
       console.error("Erro crítico:", error);
       statusEl.textContent = `ERRO: ${error.message}`;

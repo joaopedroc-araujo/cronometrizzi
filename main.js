@@ -6,7 +6,9 @@ TrelloPowerUp.initialize({
       callback: (t) =>
         t.popup({
           title: "Controle",
-          url: t.signUrl("popup.html"), // Assinar a URL é importante
+          url: t.signUrl("popup.html", {
+            _: Date.now(),
+          }),
         }),
     },
   ],

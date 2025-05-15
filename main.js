@@ -8,16 +8,32 @@ TrelloPowerUp.initialize({
   ],
   "card-badges": (t) =>
     t.get("card", "shared", ["isRunning", "startTime"]).then((data) => {
-      const isRunning = data?.isRunning || false;
-      const startTime = data?.startTime || null;
+      const isRunning = data?.isRunning;
+      const startTime = data?.startTime;
 
       if (isRunning && startTime) {
         const elapsed = Date.now() - startTime;
-        statusEl.textContent = `Rodando: ${formatTime(elapsed)}`;
-        button.textContent = "Parar";
-      } else {
-        statusEl.textContent = "Parado";
-        button.textContent = "Iniciar";
+        const totalSeconds = Math.floor(elapsed / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        const minutes = Math.floor((totalSeconds % 3600) / 60);
+        const seconds = totalSeconds % 60;
+        const formatted = `${String(hours).padStart(2, "0")}:${String(
+          minutes
+        ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+
+        return [
+          {
+            text: `⏱ ${formatted}`,
+            color: "green",
+          },
+        ];
       }
+
+      return [
+        {
+          text: "⏱ Parado",
+          color: "red",
+        },
+      ];
     }),
 });

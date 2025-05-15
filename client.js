@@ -30,20 +30,24 @@ button.addEventListener("click", () => {
     .get("card", "shared", "isRunning")
     .then((isRunning) => {
       if (isRunning) {
-        t.set("card", "shared", { isRunning: false }).then(() => {
-          statusEl.textContent = "Parado";
-          button.textContent = "Iniciar";
-          t.closePopup();
-        });
+        TrelloPowerUp.iframe()
+          .set("card", "shared", { isRunning: false })
+          .then(() => {
+            statusEl.textContent = "Parado";
+            button.textContent = "Iniciar";
+            TrelloPowerUp.iframe().closePopup();
+          });
       } else {
-        t.set("card", "shared", {
-          isRunning: true,
-          startTime: Date.now(),
-        }).then(() => {
-          statusEl.textContent = "Rodando...";
-          button.textContent = "Parar";
-          t.closePopup();
-        });
+        TrelloPowerUp.iframe()
+          .set("card", "shared", {
+            isRunning: true,
+            startTime: Date.now(),
+          })
+          .then(() => {
+            statusEl.textContent = "Rodando...";
+            button.textContent = "Parar";
+            TrelloPowerUp.iframe().closePopup();
+          });
       }
     });
 });

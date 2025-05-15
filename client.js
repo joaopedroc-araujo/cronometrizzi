@@ -35,24 +35,22 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  button.addEventListener("click", () => {
-    t.get("card", "shared", "isRunning").then((isRunning) => {
-      if (isRunning) {
-        t.set("card", "shared", { isRunning: false }).then(() => {
-          statusEl.textContent = "Parado";
-          button.textContent = "Iniciar";
-          setTimeout(() => t.closePopup(), 200);
-        });
-      } else {
-        t.set("card", "shared", {
-          isRunning: true,
-          startTime: Date.now(),
-        }).then(() => {
-          statusEl.textContent = "Rodando...";
-          button.textContent = "Parar";
-          setTimeout(() => t.closePopup(), 200);
-        });
-      }
-    });
+  button.addEventListener("click", async () => {
+    const isRunning = await t.get("card", "shared", "isRunning");
+
+    if (isRunning) {
+      await t.set("card", "shared", { isRunning: false });
+      statusEl.textContent = "Parado";
+      button.textContent = "Iniciar";
+    } else {
+      await t.set("card", "shared", {
+        isRunning: true,
+        startTime: Date.now(),
+      });
+      statusEl.textContent = "Rodando...";
+      button.textContent = "Parar";
+    }
+
+    setTimeout(() => t.closePopup(), 100);
   });
 });

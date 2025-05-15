@@ -1,5 +1,5 @@
 {
-  "name": "Temporizador de Tarefas",
+  "name": "teste",
   "version": "1.0",
   "manifestVersion": 1,
   "author": "Seu Nome",
@@ -8,7 +8,7 @@
     "card-badges",
     "show-settings"
   ],
-  "baseUrl": "https://seusite.com",
+  "baseUrl": "https://cronometrizzi-powerup.netlify.app/",
   "requestOrigins": [
     {
       "name": "Trello",

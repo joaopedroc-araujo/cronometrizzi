@@ -1,36 +1,38 @@
+if (typeof window.TrelloPowerUp === "undefined") {
+  throw new Error("Falha ao carregar a biblioteca do Trello Power-Up");
+}
+
 const t = window.TrelloPowerUp.iframe({
   appKey: "572ff9627c40e50897a1a5bbbf294289",
   appName: "Teste",
 });
 
-// Inicialização correta do Power-Up
+// Inicialização simplificada
 t.initialize({
-  "card-buttons": function (t, options) {
-    return [
-      {
-        icon: "https://i.imgur.com/9ZZ8rf3.png",
-        text: "Cronômetro",
-        condition: "always",
-      },
-    ];
-  },
-  "card-badges": function (t, options) {
-    return t.get("card", "shared", "isRunning").then((isRunning) => {
-      if (isRunning) {
-        return t.get("card", "shared", "startTime").then((startTime) => [
-          {
-            title: "Tempo Decorrido",
-            text: formatTime(Date.now() - startTime),
-            color: "green",
-            icon: "https://i.imgur.com/9ZZ8rf3.png",
-          },
-        ]);
-      }
-      return [];
-    });
-  },
+  "card-buttons": () => [
+    {
+      icon: "https://i.imgur.com/9ZZ8rf3.png",
+      text: "Cronômetro",
+      callback: (t) => t.popup({ title: "Controle", url: "index.html" }),
+    },
+  ],
+  "card-badges": () =>
+    t.get("card", "shared", "isRunning").then((isRunning) =>
+      isRunning
+        ? [
+            {
+              title: "Tempo Decorrido",
+              text: formatTime(
+                Date.now() -
+                  (t.get("card", "shared", "startTime") || Date.now())
+              ),
+              color: "green",
+              icon: "https://i.imgur.com/9ZZ8rf3.png",
+            },
+          ]
+        : []
+    ),
 });
-
 // Elementos e funções auxiliares
 let timerInterval;
 

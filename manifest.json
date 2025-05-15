@@ -1,14 +1,14 @@
 {
-  "name": "teste",
+  "name": "Cronometrizzi Power-Up",
   "version": "1.0",
   "manifestVersion": 1,
   "author": "Seu Nome",
   "capabilities": [
     "card-buttons",
     "card-badges",
-    "show-settings"
+    "authorization-status"
   ],
-  "baseUrl": "https://cronometrizzi-powerup.netlify.app/",
+  "baseUrl": "https://cronometrizzi-powerup.netlify.app",
   "requestOrigins": [
     {
       "name": "Trello",

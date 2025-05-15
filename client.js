@@ -21,10 +21,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
     if (isRunning && startTime) {
       const elapsed = Date.now() - startTime;
-      statusEl.textContent = `Rodando: ${formatTime(elapsed)}`;
+      statusEl?.textContent = `Rodando: ${formatTime(elapsed)}`;
       button.textContent = "Parar";
     } else {
-      statusEl.textContent = "Parado";
+      statusEl?.textContent = "Parado";
       button.textContent = "Iniciar";
     }
   });
@@ -33,16 +33,15 @@ document.addEventListener("DOMContentLoaded", function () {
     t.get("card", "shared", "isRunning").then((isRunning) => {
       if (isRunning) {
         t.set("card", "shared", { isRunning: false }).then(() => {
-          statusEl.textContent = "Parado";
+          statusEl?.textContent = "Parado";
           button.textContent = "Iniciar";
-          t.closePopup();
         });
       } else {
         t.set("card", "shared", {
           isRunning: true,
           startTime: Date.now(),
         }).then(() => {
-          statusEl.textContent = "Rodando...";
+          statusEl?.textContent = "Rodando...";
           button.textContent = "Parar";
           t.closePopup();
         });

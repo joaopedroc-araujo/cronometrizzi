@@ -1,30 +1,35 @@
-document.addEventListener("DOMContentLoaded", function () {
+document.addEventListener("DOMContentLoaded", () => {
   const statusEl = document.getElementById("status");
   const button = document.getElementById("toggleButton");
+
+  if (!statusEl || !button) {
+    console.error("Elementos não encontrados");
+    return;
+  }
+
+  const t = TrelloPowerUp.iframe();
 
   function formatTime(ms) {
     const totalSeconds = Math.floor(ms / 1000);
     const hours = Math.floor(totalSeconds / 3600);
     const minutes = Math.floor((totalSeconds % 3600) / 60);
     const seconds = totalSeconds % 60;
-    return `${String(hours).padStart(
+    return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
       2,
       "0"
-    )}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+    )}:${String(seconds).padStart(2, "0")}`;
   }
 
-  const t = TrelloPowerUp.iframe();
-
   t.get("card", "shared", ["isRunning", "startTime"]).then((data) => {
-    const isRunning = data?.isRunning || false;
-    const startTime = data?.startTime || null;
+    const isRunning = data?.isRunning;
+    const startTime = data?.startTime;
 
     if (isRunning && startTime) {
       const elapsed = Date.now() - startTime;
-      statusEl?.textContent = `Rodando: ${formatTime(elapsed)}`;
+      statusEl.textContent = `Rodando: ${formatTime(elapsed)}`;
       button.textContent = "Parar";
     } else {
-      statusEl?.textContent = "Parado";
+      statusEl.textContent = "Parado";
       button.textContent = "Iniciar";
     }
   });
@@ -33,15 +38,16 @@ document.addEventListener("DOMContentLoaded", function () {
     t.get("card", "shared", "isRunning").then((isRunning) => {
       if (isRunning) {
         t.set("card", "shared", { isRunning: false }).then(() => {
-          statusEl?.textContent = "Parado";
+          statusEl.textContent = "Parado";
           button.textContent = "Iniciar";
+          t.closePopup();
         });
       } else {
         t.set("card", "shared", {
           isRunning: true,
           startTime: Date.now(),
         }).then(() => {
-          statusEl?.textContent = "Rodando...";
+          statusEl.textContent = "Rodando...";
           button.textContent = "Parar";
           t.closePopup();
         });

@@ -21,6 +21,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   t.get("card", "shared", ["isRunning", "startTime"]).then((data) => {
+    console.log("Dados carregados:", data);
     const isRunning = data?.isRunning;
     const startTime = data?.startTime;
 
@@ -40,7 +41,7 @@ document.addEventListener("DOMContentLoaded", () => {
         t.set("card", "shared", { isRunning: false }).then(() => {
           statusEl.textContent = "Parado";
           button.textContent = "Iniciar";
-          t.closePopup();
+          setTimeout(() => t.closePopup(), 200);
         });
       } else {
         t.set("card", "shared", {
@@ -49,7 +50,7 @@ document.addEventListener("DOMContentLoaded", () => {
         }).then(() => {
           statusEl.textContent = "Rodando...";
           button.textContent = "Parar";
-          t.closePopup();
+          setTimeout(() => t.closePopup(), 200);
         });
       }
     });

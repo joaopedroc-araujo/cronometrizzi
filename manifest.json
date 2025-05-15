@@ -8,6 +8,9 @@
     "card-badges",
     "authorization-status"
   ],
+  "permissions": {
+    "shared": true
+  },
   "baseUrl": "https://cronometrizzi-powerup.netlify.app",
   "requestOrigins": [
     {

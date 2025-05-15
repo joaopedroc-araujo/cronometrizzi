@@ -9,6 +9,30 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const t = TrelloPowerUp.iframe();
   console.log("Contexto de t:", t.getContext()); // Verificar contexto
+  const checkPermissions = () => {
+    const { permissions } = t.getContext();
+    if (permissions.card !== "write") {
+      throw new Error("Permissões insuficientes para modificar este card");
+    }
+  };
+
+  const updateStorage = async (data) => {
+    try {
+      checkPermissions();
+      console.log("Salvando dados:", data);
+      await t.set("card", "shared", data);
+      console.log("Dados salvos com sucesso");
+    } catch (error) {
+      console.error("Erro no armazenamento:", error);
+      throw error;
+    }
+  };
+
+  if (!t.getContext().card) {
+    console.error("Contexto de card não disponível");
+    statusEl.textContent = "Erro: Contexto inválido";
+    return;
+  }
 
   let updateInterval;
 
@@ -63,7 +87,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const elapsed = Date.now() - startTime;
       statusEl.textContent = `Rodando: ${formatTime(elapsed)}`;
       button.textContent = "Parar";
-      startUpdating(); // Iniciar atualizações
+      startUpdating();
     } else {
       statusEl.textContent = "Parado";
       button.textContent = "Iniciar";
@@ -71,39 +95,30 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   button.addEventListener("click", async () => {
-    console.log("Botão clicado");
-
     try {
-      const data = await t.get("card", "shared", ["isRunning", "startTime"]);
-      console.log("Dados atuais:", data);
-      const isRunning = data?.isRunning;
+      const currentData = await t.get("card", "shared", [
+        "isRunning",
+        "startTime",
+      ]);
+      console.log("Dados recuperados:", currentData);
 
-      if (isRunning) {
-        // Parar cronômetro
-        console.log("Parando cronômetro");
-        await t.set("card", "shared", {
+      if (currentData?.isRunning) {
+        await updateStorage({
           isRunning: false,
-          lastUpdate: Date.now(), // Para forçar atualização do badge
+          lastUpdate: Date.now(),
         });
-        statusEl.textContent = "Parado";
-        button.textContent = "Iniciar";
-        stopUpdating();
       } else {
-        // Iniciar cronômetro
-        console.log("Iniciando cronômetro");
-        const now = Date.now();
-        await t.set("card", "shared", {
+        await updateStorage({
           isRunning: true,
-          startTime: now,
-          lastUpdate: now,
+          startTime: Date.now(),
+          lastUpdate: Date.now(),
         });
-        statusEl.textContent = `Rodando: ${formatTime(0)}`;
-        button.textContent = "Parar";
-        startUpdating();
       }
+
+      updateTimeDisplay();
     } catch (error) {
-      console.error("Erro ao atualizar estado:", error);
-      statusEl.textContent = "Erro: " + error.message;
+      console.error("Falha na operação:", error);
+      statusEl.textContent = `Erro: ${error.message}`;
     }
   });
 

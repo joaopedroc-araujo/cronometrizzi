@@ -1,6 +1,7 @@
 const t = TrelloPowerUp.iframe();
 
-let timerInterval;
+const statusEl = document.getElementById("status");
+const button = document.getElementById("toggleButton");
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -13,44 +14,35 @@ function formatTime(ms) {
   )}:${String(seconds).padStart(2, "0")}`;
 }
 
-function updateBadge(t) {
-  t.get("card", "shared", ["isRunning", "startTime"]).then(
-    ({ isRunning, startTime }) => {
-      if (isRunning) {
-        const elapsed = Date.now() - startTime;
-        t.set("card", "shared", { startTime: Date.now() - elapsed });
-        t.cardBadges();
-      }
+t.get("card", "shared", ["isRunning", "startTime"]).then(
+  ({ isRunning, startTime }) => {
+    if (isRunning) {
+      const elapsed = Date.now() - startTime;
+      statusEl.textContent = `Rodando: ${formatTime(elapsed)}`;
+      button.textContent = "Parar";
+    } else {
+      statusEl.textContent = "Parado";
+      button.textContent = "Iniciar";
     }
-  );
-}
+  }
+);
 
-function startTimer(t) {
-  const startTime = Date.now();
-  t.set("card", "shared", { isRunning: true, startTime }).then(() => {
-    timerInterval = setInterval(() => updateBadge(t), 1000);
-    t.cardBadges();
-  });
-}
-
-function stopTimer(t) {
-  clearInterval(timerInterval);
-  t.set("card", "shared", { isRunning: false }).then(() => t.cardBadges());
-}
-
-t.render(() => {
-  return t.get("card", "shared", "isRunning").then((isRunning) => {
-    return [
-      {
-        icon: isRunning
-          ? "https://i.imgur.com/8aRqDpa.png"
-          : "https://i.imgur.com/9ZZ8rf3.png",
-        text: isRunning ? "PARAR" : "INICIAR",
-        callback: () => {
-          isRunning ? stopTimer(t) : startTimer(t);
-          return t.closePopup().then(() => t.cardBadges());
-        },
-      },
-    ];
+button.addEventListener("click", () => {
+  t.get("card", "shared", "isRunning").then((isRunning) => {
+    if (isRunning) {
+      t.set("card", "shared", { isRunning: false }).then(() => {
+        statusEl.textContent = "Parado";
+        button.textContent = "Iniciar";
+        t.closePopup();
+      });
+    } else {
+      t.set("card", "shared", { isRunning: true, startTime: Date.now() }).then(
+        () => {
+          statusEl.textContent = "Rodando...";
+          button.textContent = "Parar";
+          t.closePopup();
+        }
+      );
+    }
   });
 });

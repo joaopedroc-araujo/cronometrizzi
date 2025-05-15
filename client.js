@@ -1,39 +1,5 @@
-if (typeof window.TrelloPowerUp === "undefined") {
-  throw new Error("Falha ao carregar a biblioteca do Trello Power-Up");
-}
+const t = TrelloPowerUp.iframe();
 
-const t = window.TrelloPowerUp.iframe({
-  appKey: "572ff9627c40e50897a1a5bbbf294289",
-  appName: "Teste",
-});
-
-// Inicialização simplificada
-t.initialize({
-  "card-buttons": () => [
-    {
-      icon: "https://i.imgur.com/9ZZ8rf3.png",
-      text: "Cronômetro",
-      callback: (t) => t.popup({ title: "Controle", url: "index.html" }),
-    },
-  ],
-  "card-badges": () =>
-    t.get("card", "shared", "isRunning").then((isRunning) =>
-      isRunning
-        ? [
-            {
-              title: "Tempo Decorrido",
-              text: formatTime(
-                Date.now() -
-                  (t.get("card", "shared", "startTime") || Date.now())
-              ),
-              color: "green",
-              icon: "https://i.imgur.com/9ZZ8rf3.png",
-            },
-          ]
-        : []
-    ),
-});
-// Elementos e funções auxiliares
 let timerInterval;
 
 function formatTime(ms) {
@@ -52,14 +18,13 @@ function updateBadge(t) {
     ({ isRunning, startTime }) => {
       if (isRunning) {
         const elapsed = Date.now() - startTime;
-        t.set("card", "shared", { startTime: Date.now() - elapsed }); // Atualiza o tempo
+        t.set("card", "shared", { startTime: Date.now() - elapsed });
         t.cardBadges();
       }
     }
   );
 }
 
-// Controles do temporizador
 function startTimer(t) {
   const startTime = Date.now();
   t.set("card", "shared", { isRunning: true, startTime }).then(() => {
@@ -73,8 +38,7 @@ function stopTimer(t) {
   t.set("card", "shared", { isRunning: false }).then(() => t.cardBadges());
 }
 
-// Handler dos botões
-t.render(function () {
+t.render(() => {
   return t.get("card", "shared", "isRunning").then((isRunning) => {
     return [
       {
@@ -82,7 +46,7 @@ t.render(function () {
           ? "https://i.imgur.com/8aRqDpa.png"
           : "https://i.imgur.com/9ZZ8rf3.png",
         text: isRunning ? "PARAR" : "INICIAR",
-        callback: function (t) {
+        callback: () => {
           isRunning ? stopTimer(t) : startTimer(t);
           return t.closePopup().then(() => t.cardBadges());
         },

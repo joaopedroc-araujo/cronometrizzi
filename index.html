@@ -5,7 +5,7 @@
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'self' https://*.trello.com https://cronometrizzi-powerup.netlify.app 'unsafe-inline' 'unsafe-eval';
-               script-src 'self' https://p.trellocdn.com 'unsafe-inline';
+                   script-src 'self' https://p.trellocdn.com;
                    style-src 'self' https://p.trellocdn.com;
                    connect-src *;"
     />
@@ -14,33 +14,6 @@
   </head>
   <body>
     <script src="https://p.trellocdn.com/power-up.min.js"></script>
-    <!-- <script src="client.js"></script> -->
-    <script>
-      TrelloPowerUp.initialize({
-        "card-buttons": () => [
-          {
-            icon: "https://i.imgur.com/9ZZ8rf3.png",
-            text: "Cronômetro",
-            callback: (t) => t.popup({ title: "Controle", url: "index.html" }),
-          },
-        ],
-        "card-badges": () =>
-          t.get("card", "shared", "isRunning").then((isRunning) =>
-            isRunning
-              ? [
-                  {
-                    title: "Tempo Decorrido",
-                    text: formatTime(
-                      Date.now() -
-                        (t.get("card", "shared", "startTime") || Date.now())
-                    ),
-                    color: "green",
-                    icon: "https://i.imgur.com/9ZZ8rf3.png",
-                  },
-                ]
-              : []
-          ),
-      });
-    </script>
+    <script src="main.js"></script>
   </body>
 </html>

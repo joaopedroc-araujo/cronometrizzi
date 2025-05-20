@@ -12,7 +12,7 @@
   "permissions": {
     "shared": true
   },
-  "baseUrl": "http://localhost:5173",
+  "baseUrl": "https://cronometrizzi-powerup.netlify.app/",
   "requestOrigins": [
     {
       "name": "Trello",

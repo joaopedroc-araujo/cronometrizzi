@@ -84,7 +84,6 @@ export const TimerPopup = () => {
         "startTime",
       ]);
       console.log("Confirmação após set:", confirmData);
-      await t.refresh();
 
       setIsRunning(newRunning);
       setElapsed(0);

@@ -66,6 +66,12 @@ export const TimerPopup = () => {
         startTime: newStartTime,
       });
 
+      const confirmData = await t.get("card", "shared", [
+        "isRunning",
+        "startTime",
+      ]);
+      console.log("Confirmação após set:", confirmData);
+
       setIsRunning(newRunning);
       setElapsed(0);
       t.closePopup();

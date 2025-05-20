@@ -10,7 +10,8 @@
     "authorization-status"
   ],
   "permissions": {
-    "shared": true
+    "authorization": "read,write",
+    "shared": "read,write"
   },
   "baseUrl": "https://cronometrizzi-powerup.netlify.app/",
   "requestOrigins": [

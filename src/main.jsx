@@ -2,7 +2,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 
-// Função para formatar o tempo
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
@@ -11,7 +10,6 @@ function formatTime(ms) {
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
-// Inicialização do Power-Up
 window.TrelloPowerUp.initialize({
   "card-buttons": function (t, opts) {
     return [
@@ -21,7 +19,7 @@ window.TrelloPowerUp.initialize({
         callback: function (t) {
           return t.popup({
             title: "Controle do Cronômetro",
-            url: "popup.html", // Caminho correto!
+            url: "popup.html",
             height: 180
           });
         }
@@ -29,30 +27,48 @@ window.TrelloPowerUp.initialize({
     ];
   },
   "card-badges": function (t, opts) {
-    return t.get("card", "shared", ["isRunning", "startTime"]).then((data) => {
-      if (data?.isRunning && data?.startTime) {
-        const elapsed = Date.now() - data.startTime;
-        console.log("Badge: dados do card:", data, elapsed);
-        return [
-          {
+    return t.get("card", "shared", ["isRunning", "startTime"])
+      .then((data) => {
+        // Tratamento para dados não inicializados
+        if (!data) {
+          console.log("Dados não encontrados, inicializando padrão");
+          return t.set("card", "shared", {
+            isRunning: false,
+            startTime: 0
+          }).then(() => ({ isRunning: false, startTime: 0 }));
+        }
+
+        // Log detalhado para debug
+        console.log("Badge - Dados recebidos:", {
+          isRunning: data.isRunning,
+          startTime: data.startTime,
+          currentTime: Date.now()
+        });
+
+        if (data.isRunning && data.startTime) {
+          const elapsed = Date.now() - data.startTime;
+          return [{
             text: `⏱ ${formatTime(elapsed)}`,
             color: "green",
-            refresh: 10
-          }
-        ];
-      }
-      return [
-        {
-          text: "⏱ Parado",
-          color: "red"
+            refresh: 1 // Atualiza a cada 1 segundo quando rodando
+          }];
         }
-      ];
-    });
+        return [{
+          text: "⏱ Parado",
+          color: "red",
+          refresh: 60 // Atualiza a cada 60 segundos quando parado
+        }];
+      })
+      .catch(error => {
+        console.error("Erro no badge:", error);
+        return [{
+          text: "⏱ Erro",
+          color: "yellow"
+        }];
+      });
   }
 });
 
-// Se quiser renderizar algo com React na tela principal, faça aqui:
 ReactDOM.createRoot(document.getElementById("root")).render(
-  <React.StrictMode>
-  </React.StrictMode>
+  <React.StrictMode></React.StrictMode>
 );

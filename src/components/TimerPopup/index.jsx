@@ -23,9 +23,22 @@ export const TimerPopup = () => {
     let interval;
     async function fetchData() {
       try {
-        console.log("Buscando dados do Trello...");
-        const data = await t.get("card", "shared", ["isRunning", "startTime"]);
-        console.log("Dados recebidos:", data);
+        let attempts = 0;
+        let data;
+
+        while (attempts < 3 && !data) {
+          data = await t.get("card", "shared", ["isRunning", "startTime"]);
+          if (!data) {
+            await new Promise((resolve) => setTimeout(resolve, 500));
+            attempts++;
+          }
+        }
+
+        if (!data) {
+          console.error("Falha após 3 tentativas. Inicializando manualmente.");
+          data = { isRunning: false, startTime: 0 };
+          await t.set("card", "shared", data);
+        }
         const running = data?.isRunning || false;
         const start = data?.startTime || 0;
 
@@ -71,10 +84,11 @@ export const TimerPopup = () => {
         "startTime",
       ]);
       console.log("Confirmação após set:", confirmData);
+      await t.refresh();
 
       setIsRunning(newRunning);
       setElapsed(0);
-      t.closePopup();
+      await t.closePopup();
     } catch (error) {
       console.error("Erro ao atualizar estado:", error);
     }

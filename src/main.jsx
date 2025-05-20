@@ -32,6 +32,7 @@ window.TrelloPowerUp.initialize({
     return t.get("card", "shared", ["isRunning", "startTime"]).then((data) => {
       if (data?.isRunning && data?.startTime) {
         const elapsed = Date.now() - data.startTime;
+        console.log("Badge: dados do card:", data, elapsed);
         return [
           {
             text: `⏱ ${formatTime(elapsed)}`,

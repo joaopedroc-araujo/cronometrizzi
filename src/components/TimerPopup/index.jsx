@@ -5,7 +5,10 @@ function formatTime(ms) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")}`;
 }
 
 export const TimerPopup = () => {
@@ -14,25 +17,28 @@ export const TimerPopup = () => {
   const [loading, setLoading] = useState(true);
 
   const t = window.TrelloPowerUp.iframe();
+  console.log("TimerPopup renderizou", t);
 
   useEffect(() => {
     let interval;
     async function fetchData() {
       try {
+        console.log("Buscando dados do Trello...");
         const data = await t.get("card", "shared", ["isRunning", "startTime"]);
+        console.log("Dados recebidos:", data);
         const running = data?.isRunning || false;
         const start = data?.startTime || 0;
-        
+
         setIsRunning(running);
         setLoading(false);
 
         if (running && start) {
           // Calcula o tempo decorrido imediatamente
           setElapsed(Date.now() - start);
-          
+
           // Atualiza a cada segundo
           interval = setInterval(() => {
-            setElapsed(prev => prev + 1000);
+            setElapsed((prev) => prev + 1000);
           }, 1000);
         }
       } catch (error) {
@@ -43,16 +49,21 @@ export const TimerPopup = () => {
 
     fetchData();
     return () => clearInterval(interval);
-  }, []);
+  }, [t]);
 
   const handleToggle = async () => {
+    console.log("Botão clicado. Estado atual:", { isRunning });
     const newRunning = !isRunning;
     const newStartTime = newRunning ? Date.now() : 0;
 
     try {
       await t.set("card", "shared", {
         isRunning: newRunning,
-        startTime: newStartTime
+        startTime: newStartTime,
+      });
+      console.log("Novo estado salvo:", {
+        isRunning: newRunning,
+        startTime: newStartTime,
       });
 
       setIsRunning(newRunning);
@@ -78,11 +89,11 @@ export const TimerPopup = () => {
           padding: "8px 16px",
           cursor: "pointer",
           fontSize: 16,
-          marginTop: 8
+          marginTop: 8,
         }}
       >
         {isRunning ? "Parar" : "Iniciar"}
       </button>
     </div>
   );
-}
+};

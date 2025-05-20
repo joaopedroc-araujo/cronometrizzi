@@ -7,7 +7,10 @@ function formatTime(ms) {
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")}`;
 }
 
 window.TrelloPowerUp.initialize({
@@ -20,53 +23,61 @@ window.TrelloPowerUp.initialize({
           return t.popup({
             title: "Controle do Cronômetro",
             url: "popup.html",
-            height: 180
+            height: 180,
           });
-        }
-      }
+        },
+      },
     ];
   },
   "card-badges": function (t, opts) {
-    return t.get("card", "shared", ["isRunning", "startTime"])
+    return t
+      .get("card", "shared", ["isRunning", "startTime"], { force: true })
       .then((data) => {
-        // Tratamento para dados não inicializados
         if (!data) {
-          console.log("Dados não encontrados, inicializando padrão");
-          return t.set("card", "shared", {
-            isRunning: false,
-            startTime: 0
-          }).then(() => ({ isRunning: false, startTime: 0 }));
+          console.error("Dados completamente ausentes");
+          return t
+            .set("card", "shared", {
+              isRunning: false,
+              startTime: 0,
+            })
+            .then(() => ({ isRunning: false, startTime: 0 }));
         }
 
         // Log detalhado para debug
         console.log("Badge - Dados recebidos:", {
           isRunning: data.isRunning,
           startTime: data.startTime,
-          currentTime: Date.now()
+          currentTime: Date.now(),
         });
 
         if (data.isRunning && data.startTime) {
           const elapsed = Date.now() - data.startTime;
-          return [{
-            text: `⏱ ${formatTime(elapsed)}`,
-            color: "green",
-            refresh: 1 // Atualiza a cada 1 segundo quando rodando
-          }];
+          return [
+            {
+              text: `⏱ ${formatTime(elapsed)}`,
+              color: "green",
+              refresh: 1, // Atualiza a cada 1 segundo quando rodando
+            },
+          ];
         }
-        return [{
-          text: "⏱ Parado",
-          color: "red",
-          refresh: 60 // Atualiza a cada 60 segundos quando parado
-        }];
+        return [
+          {
+            text: "⏱ Parado",
+            color: "red",
+            refresh: 60, // Atualiza a cada 60 segundos quando parado
+          },
+        ];
       })
-      .catch(error => {
+      .catch((error) => {
         console.error("Erro no badge:", error);
-        return [{
-          text: "⏱ Erro",
-          color: "yellow"
-        }];
+        return [
+          {
+            text: "⏱ Erro",
+            color: "yellow",
+          },
+        ];
       });
-  }
+  },
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(

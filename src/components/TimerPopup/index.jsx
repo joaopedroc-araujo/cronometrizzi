@@ -65,33 +65,24 @@ export const TimerPopup = () => {
   }, [t]);
 
   const handleToggle = async () => {
-    console.log("Botão clicado. Estado atual:", { isRunning });
+  try {
     const newRunning = !isRunning;
     const newStartTime = newRunning ? Date.now() : 0;
+    
+    await t.set("card", "shared", {
+      isRunning: newRunning,
+      startTime: newStartTime
+    });
 
-    try {
-      await t.set("card", "shared", {
-        isRunning: newRunning,
-        startTime: newStartTime,
-      });
-      console.log("Novo estado salvo:", {
-        isRunning: newRunning,
-        startTime: newStartTime,
-      });
+    await t.render(() => {}); // Método válido para atualizar componentes
 
-      const confirmData = await t.get("card", "shared", [
-        "isRunning",
-        "startTime",
-      ]);
-      console.log("Confirmação após set:", confirmData);
+    setTimeout(() => t.closePopup(), 500);
+    
+  } catch (error) {
+    console.error("Erro completo:", error);
+  }
+};
 
-      setIsRunning(newRunning);
-      setElapsed(0);
-      await t.closePopup();
-    } catch (error) {
-      console.error("Erro ao atualizar estado:", error);
-    }
-  };
 
   if (loading) return <div style={{ padding: 16 }}>Carregando...</div>;
 

@@ -65,24 +65,28 @@ export const TimerPopup = () => {
   }, [t]);
 
   const handleToggle = async () => {
-  try {
-    const newRunning = !isRunning;
-    const newStartTime = newRunning ? Date.now() : 0;
-    
-    await t.set("card", "shared", {
-      isRunning: newRunning,
-      startTime: newStartTime
-    });
+    try {
+      const newRunning = !isRunning;
+      const newStartTime = newRunning ? Date.now() : 0;
 
-    await t.render(() => {}); // Método válido para atualizar componentes
+      // Persiste os dados com confirmação
+      await t.set("card", "shared", {
+        isRunning: newRunning,
+        startTime: newStartTime,
+      });
 
-    setTimeout(() => t.closePopup(), 500);
-    
-  } catch (error) {
-    console.error("Erro completo:", error);
-  }
-};
+      // Aguarda 300ms para garantir persistência
+      await new Promise((resolve) => setTimeout(resolve, 300));
 
+      // Fecha o popup
+      t.closePopup();
+
+      // Atualiza o badge manualmente
+      t.render(() => {});
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+    }
+  };
 
   if (loading) return <div style={{ padding: 16 }}>Carregando...</div>;
 

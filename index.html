@@ -1,18 +1,20 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-BR">
   <head>
-    <meta charset="utf-8" />
-   <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self' https://*.trello.com https://cronometrizzi-powerup.netlify.app;
-               script-src 'self' https://p.trellocdn.com 'unsafe-eval';
-               style-src 'self' https://p.trellocdn.com 'unsafe-inline';
-               img-src * data:;
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cronometrizzi Power-Up</title>
+    <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self' https://*.trello.com https://p.trellocdn.com;
+               script-src 'self' https://p.trellocdn.com 'unsafe-inline' 'unsafe-eval';
+               style-src 'self' 'unsafe-inline';
                connect-src *;">
-    <title>Temporizador Power-Up</title>
-    <link rel="stylesheet" href="https://p.trellocdn.com/power-up.min.css" />
+    <!-- Script oficial do Trello Power-Up -->
+    <script src="https://p.trellocdn.com/power-up.min.js"></script>
   </head>
   <body>
-    <script src="https://p.trellocdn.com/power-up.min.js"></script>
-    <script src="main.js" defer></script>
+    <div id="root"></div>
+    <!-- Seu bundle React (inserido pelo Vite) -->
+    <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>

@@ -6,13 +6,13 @@
   "capabilities": [
     "card-buttons",
     "card-badges",
-    "authorization-status",
-    "callback"
+    "callback",
+    "authorization-status"
   ],
   "permissions": {
     "shared": true
   },
-  "baseUrl": "https://cronometrizzi-powerup.netlify.app",
+  "baseUrl": "http://localhost:5173",
   "requestOrigins": [
     {
       "name": "Trello",

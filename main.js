@@ -33,7 +33,7 @@ TrelloPowerUp.initialize({
             {
               text: `⏱ ${formatted}`,
               color: "green",
-              refresh: 10, // Atualizar o badge a cada 10 segundos
+              refresh: 10,
             },
           ];
         }

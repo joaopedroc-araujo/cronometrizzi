@@ -6,7 +6,8 @@
   "capabilities": [
     "card-buttons",
     "card-badges",
-    "authorization-status"
+    "authorization-status",
+    "callback"
   ],
   "permissions": {
     "shared": true

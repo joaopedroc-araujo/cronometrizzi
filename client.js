@@ -8,11 +8,12 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   const t = TrelloPowerUp.iframe();
-  console.log("Contexto de t:", t.getContext()); // Verificar contexto
-  const checkPermissions = () => {
-    const { permissions } = t.getContext();
-    if (permissions.card !== "write") {
-      throw new Error("Permissões insuficientes para modificar este card");
+  console.log("Contexto de t:", t.getContext());
+
+  const checkPermissions = async () => {
+    const ctx = await t.getContext();
+    if (ctx.permissions.card !== "write") {
+      throw new Error("Permissões insuficientes");
     }
   };
 
@@ -87,11 +88,15 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Iniciar atualizações contínuas se o cronômetro estiver rodando
-  function startUpdating() {
-    updateInterval = setInterval(() => {
-      updateTimeDisplay();
-    }, 1000);
-  }
+  const startUpdating = () => {
+    if (!updateInterval) {
+      updateInterval = setInterval(() => {
+        t.get("card", "shared", ["isRunning", "startTime"])
+          .then(updateTimeDisplay)
+          .catch(console.error);
+      }, 1000);
+    }
+  };
 
   // Parar atualizações
   function stopUpdating() {
@@ -121,6 +126,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   button.addEventListener("click", async () => {
     try {
+      await checkPermissions();
+
       const currentData = (await t.get("card", "shared", [
         "isRunning",
         "startTime",

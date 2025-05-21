@@ -33,16 +33,22 @@ window.TrelloPowerUp.initialize({
   "card-badges": async (t, opts) => {
     try {
       const trelloToken = await t.getRestApi().getToken();
+      console.log("Trello Token:", trelloToken);
       const cardId = await t.card("id").get("id");
+      console.log("Card ID:", cardId);
 
       const supabase = getSupabaseClient(trelloToken, cardId);
-      await supabase.rpc("set_trello_context");
+      console.log("Supabase Client:", supabase);
+      const supabaseRpc = await supabase.rpc("set_trello_context");
+      console.log("Context set in Supabase", supabaseRpc);
 
       const { data, error } = await supabase
         .from("timers")
         .select("is_running, start_time")
         .eq("card_id", cardId)
         .single();
+
+      console.log("Data from Supabase:", data);
 
       if (error || !data) {
         return [

@@ -23,8 +23,6 @@ export const TimerPopup = () => {
   const cardId = t.card("id").get("id");
   const supabase = getSupabaseClient(trelloToken, cardId);
 
-  // Configuração do Supabase
-
   useEffect(() => {
     let channel; // ← Variável para controlar o canal
 
@@ -45,7 +43,6 @@ export const TimerPopup = () => {
         setIsRunning(data?.is_running || false);
         setElapsed(data?.start_time ? Date.now() - data.start_time : 0);
 
-        // Configurar WebSocket APÓS a inicialização
         channel = supabase
           .channel("timer-changes")
           .on(

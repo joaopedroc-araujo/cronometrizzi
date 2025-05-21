@@ -1,125 +1,111 @@
 import { useEffect, useState } from "react";
-import { supabase } from "../../supabaseClient";
+import { getSupabaseClient, supabase } from "../../supabaseClient";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")}`;
 }
 
 export const TimerPopup = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [authError, setAuthError] = useState("");
+  // const [loading, setLoading] = useState(true);
 
-  // Inicialização CORRETA do Trello Power-Up para popups
-  const t = window.TrelloPowerUp.iframe(); // ← Método correto para popups
+  // Inicialização com Trello Token
+  const t = window.TrelloPowerUp.iframe();
+  const trelloToken = t.getRestApi().getToken();
+
+  // Configuração do Supabase
 
   useEffect(() => {
-    let interval;
+    const t = window.TrelloPowerUp.iframe(); // ← Movido para fora da função async
+    let channel; // ← Variável para controlar o canal
 
-    const initializeAuthAndData = async () => {
+    const initializeTimer = async () => {
       try {
-        // Passo 1: Obter email do Trello (SEM t.ready())
-        const member = await t.member('email');
-        const email = member?.email;
+        const trelloToken = await t.getRestApi().getToken();
+        const cardId = await t.card("id").get("id");
 
-        if (!email) throw new Error("Email não disponível");
+        const supabase = getSupabaseClient(trelloToken, cardId);
 
-        // Passo 2: Login automático no Supabase
-        const { error: authError } = await supabase.auth.signInWithOtp({
-          email,
-          options: {
-            shouldCreateUser: true,
-            emailRedirectTo: window.location.href
-          }
-        });
+        // Configurar contexto no Supabase
+        await supabase.rpc("set_trello_context");
 
-        if (authError) throw authError;
-
-        // Passo 3: Carregar dados do cronômetro
-        const { data: timerData, error: fetchError } = await supabase
-          .from('card_timers')
-          .select('is_running, start_time')
-          .eq('card_id', t.getContext().card.id)
+        // Buscar dados do timer
+        const { data, error } = await supabase
+          .from("timers")
+          .select("is_running, start_time")
+          .eq("card_id", cardId)
           .single();
 
-        if (fetchError) throw fetchError;
+        if (error) throw error;
 
-        // Passo 4: Atualizar estado
-        setIsRunning(timerData?.is_running || false);
+        setIsRunning(data?.is_running || false);
+        setElapsed(data?.start_time ? Date.now() - data.start_time : 0);
 
-        if (timerData?.is_running && timerData?.start_time) {
-          const initialElapsed = Date.now() - timerData.start_time;
-          setElapsed(initialElapsed);
-          
-          interval = setInterval(() => {
-            setElapsed(prev => prev + 1000);
-          }, 1000);
-        }
-
+        // Configurar WebSocket APÓS a inicialização
+        channel = supabase
+          .channel("timer-changes")
+          .on(
+            "postgres_changes",
+            {
+              event: "UPDATE",
+              schema: "public",
+              table: "timers",
+              filter: `card_id=eq.${cardId}`,
+            },
+            (payload) => {
+              setIsRunning(payload.new.is_running);
+              setElapsed(Date.now() - payload.new.start_time);
+            }
+          )
+          .subscribe();
       } catch (error) {
         console.error("Erro:", error);
-        setAuthError(error.message || "Erro ao carregar dados");
-      } finally {
-        setLoading(false);
-      }
+      // } finally {
+      //   setLoading(false);
+      // }
     };
 
-    initializeAuthAndData();
+    initializeTimer();
 
-    return () => clearInterval(interval);
-  }, []); // ← Remova a dependência [t] se necessário
+    // Cleanup
+    return () => {
+      if (channel) channel.unsubscribe();
+    };
+  }, []);
 
   const handleToggle = async () => {
-    try {
-      const newRunning = !isRunning;
-      const newStartTime = newRunning ? Date.now() : 0;
+    const newRunning = !isRunning;
+    const newStartTime = newRunning ? Date.now() : null;
 
-      // Salvar no Supabase
-      const { error } = await supabase
-        .from('card_timers')
-        .upsert({
-          card_id: t.getContext().card.id,
-          is_running: newRunning,
-          start_time: newStartTime
-        });
+    try {
+      const { data, error } = await supabase.from("card_timers").upsert({
+        card_id: t.getContext().card.id,
+        trello_token: trelloToken,
+        is_running: newRunning,
+        start_time: newStartTime,
+      });
+
+      console.log("Dados atualizados:", data);
 
       if (error) throw error;
-
       setIsRunning(newRunning);
       t.closePopup();
-
     } catch (error) {
-      console.error("Erro ao salvar:", error);
-      setAuthError(error.message);
+      console.error("Erro:", error);
     }
   };
 
-  if (authError) {
-    return (
-      <div style={{ padding: 16, color: "red", textAlign: "center" }}>
-        {authError}
-        <button 
-          onClick={() => window.location.reload()}
-          style={{ marginTop: 8, padding: 8 }}
-        >
-          Recarregar
-        </button>
-      </div>
-    );
-  }
-
-  if (loading) {
-    return <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>;
-  }
-
   return (
     <div style={{ padding: 16, textAlign: "center" }}>
-      <h3>{isRunning ? formatTime(elapsed) : "00:00:00"}</h3>
+      <h3>{formatTime(elapsed)}</h3>
       <button
         onClick={handleToggle}
         style={{

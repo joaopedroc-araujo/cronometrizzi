@@ -1,7 +1,7 @@
 // src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { supabase } from "./supabaseClient";
+import { getSupabaseClient, supabase } from "./supabaseClient";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -32,58 +32,57 @@ window.TrelloPowerUp.initialize({
   },
   "card-badges": async (t, opts) => {
     try {
-      // Obter usuário autenticado
-      const { data: { user } } = await supabase.auth.getUser();
-      console.log(user);
-      
-      if (!user) {
-        return [{
-          text: "⏱ Login",
-          color: "yellow",
-          refresh: 60
-        }];
-      }
+      const trelloToken = await t.getRestApi().getToken();
+      const cardId = await t.card("id").get("id");
 
-      // Buscar dados do Supabase
+      const supabase = getSupabaseClient(trelloToken, cardId);
+      await supabase.rpc("set_trello_context");
+
       const { data, error } = await supabase
-        .from('card_timers')
-        .select('is_running, start_time')
-        .eq('card_id', t.getContext().card.id)
-        .eq('user_id', user.id)
+        .from("timers")
+        .select("is_running, start_time")
+        .eq("card_id", cardId)
         .single();
 
       if (error || !data) {
-        return [{
-          text: "⏱ Parado",
-          color: "red",
-          refresh: 60
-        }];
+        return [
+          {
+            text: "⏱ Parado",
+            color: "red",
+            refresh: 60,
+          },
+        ];
       }
 
       if (data.is_running && data.start_time) {
         const elapsed = Date.now() - data.start_time;
-        return [{
-          text: `⏱ ${formatTime(elapsed)}`,
-          color: "green",
-          refresh: 1 // Atualiza a cada 1 segundo
-        }];
+        return [
+          {
+            text: `⏱ ${formatTime(elapsed)}`,
+            color: "green",
+            refresh: 1,
+          },
+        ];
       }
-      
-      return [{
-        text: "⏱ Parado",
-        color: "red",
-        refresh: 60
-      }];
 
+      return [
+        {
+          text: "⏱ Parado",
+          color: "red",
+          refresh: 60,
+        },
+      ];
     } catch (error) {
       console.error("Erro no badge:", error);
-      return [{
-        text: "⏱ Erro",
-        color: "yellow",
-        refresh: 60
-      }];
+      return [
+        {
+          text: "⏱ Erro",
+          color: "yellow",
+          refresh: 60,
+        },
+      ];
     }
-  }
+  },
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(

@@ -19,15 +19,16 @@ export const TimerPopup = () => {
   const [elapsed, setElapsed] = useState(0);
   const [loading, setLoading] = useState(true);
   const [t, setT] = useState(null);
+  const [needsAuth, setNeedsAuth] = useState(false);
 
+  // 1. Inicialização do Trello
   useEffect(() => {
     const initializeTrello = async () => {
       try {
-        const trelloInstance = await window.TrelloPowerUp.iframe({
-          appKey: "572ff9627c40e50897a1a5bbbf294289",
+        const trelloInstance = window.TrelloPowerUp.iframe({
+          appKey: TRELLO_TOKEN,
           appName: "Teste",
-        }).ready();
-
+        });
         setT(trelloInstance);
       } catch (error) {
         console.error("Falha na inicialização do Trello:", error);
@@ -37,110 +38,87 @@ export const TimerPopup = () => {
     initializeTrello();
   }, []);
 
-  const getTrelloToken = async () => {
-    if (!t) return null;
-
-    try {
-      // Método correto de acesso ao token
-      const token = await t.restApi.getToken();
-      if (!token) throw new Error("Token não disponível");
-      return token;
-    } catch (error) {
-      console.error("Erro ao obter token:", error);
-      await t.alert({
-        message: "Autorização necessária! Por favor, recarregue o card.",
-        duration: 5,
-      });
-      return null;
-    }
-  };
-
-  // Inicialização do Trello
+  // 2. Verificar autorização
   useEffect(() => {
     if (!t) return;
-    let channel;
-    let interval;
 
-    const initializeTimer = async () => {
+    const checkAuthorization = async () => {
       try {
-        // Obter token e card ID
-        const token = await getTrelloToken();
-        if (!token) return;
-
-        console.log("T tá funfando?", t);
-        console.log("Trello Token 1:", token);
-        const cardId = await t.card("id").get("id");
-        const supabase = getSupabaseClient(token, cardId);
-
-        // Configurar contexto no Supabase
-        await supabase.rpc("set_trello_context");
-
-        // Buscar dados do timer
-        const { data, error } = await supabase
-          .from("timers")
-          .select("is_running, start_time")
-          .eq("card_id", cardId)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        // Configurar estado inicial
-        if (data?.is_running && data.start_time) {
-          setElapsed(Date.now() - data.start_time);
-          interval = setInterval(() => {
-            setElapsed((prev) => prev + 1000);
-          }, 1000);
+        const isAuthorized = await t.restApi.isAuthorized();
+        if (!isAuthorized) {
+          setNeedsAuth(true);
+          return;
         }
-        setIsRunning(data?.is_running || false);
-
-        // WebSocket para atualizações
-        channel = supabase
-          .channel("timer-updates")
-          .on(
-            "postgres_changes",
-            {
-              event: "UPDATE",
-              schema: "public",
-              table: "timers",
-              filter: `card_id=eq.${cardId}`,
-            },
-            (payload) => {
-              setIsRunning(payload.new.is_running);
-              setElapsed(Date.now() - payload.new.start_time);
-            }
-          )
-          .subscribe();
+        loadTimerData();
       } catch (error) {
-        console.error("Erro:", error);
-      } finally {
-        setLoading(false);
+        console.error("Erro na verificação de autorização:", error);
       }
     };
 
-    initializeTimer();
-
-    return () => {
-      channel?.unsubscribe();
-      clearInterval(interval);
-    };
+    checkAuthorization();
   }, [t]);
 
-  const handleToggle = async () => {
-    if (!t) return;
-
+  // 3. Popup de autorização
+  const handleAuth = async () => {
     try {
-      const token = await getTrelloToken();
-      if (!token) return;
-      console.log("Trello Token 2:", token);
-      const cardId = await t.card("id").get("id");
+      await t.popup({
+        title: "Autorização Necessária",
+        url: "auth.html",
+        height: 200,
+      });
+      setNeedsAuth(false);
+      loadTimerData();
+    } catch (error) {
+      console.error("Erro na autorização:", error);
+    }
+  };
 
+  // 4. Carregar dados do timer
+  const loadTimerData = async () => {
+    try {
+      const token = await t.restApi.getToken();
+      console.log("Token:", token);
+      if (!token) throw new Error("Token não disponível");
+
+      const cardId = await t.card("id").get("id");
       const supabase = getSupabaseClient(token, cardId);
 
       await supabase.rpc("set_trello_context");
 
+      const { data, error } = await supabase
+        .from("timers")
+        .select("is_running, start_time")
+        .eq("card_id", cardId)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data?.is_running && data.start_time) {
+        setElapsed(Date.now() - data.start_time);
+        const interval = setInterval(() => {
+          setElapsed((prev) => prev + 1000);
+        }, 1000);
+        return () => clearInterval(interval);
+      }
+      setIsRunning(data?.is_running || false);
+    } catch (error) {
+      console.error("Erro ao carregar dados:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 5. Controle do cronômetro
+  const handleToggle = async () => {
+    try {
+      const token = await t.restApi.getToken();
+      if (!token) throw new Error("Não autorizado");
+
+      const cardId = await t.card("id").get("id");
+      const supabase = getSupabaseClient(token, cardId);
+
       const newRunning = !isRunning;
 
-      // Corrigir sintaxe do onConflict
       const { error } = await supabase.from("timers").upsert(
         {
           card_id: cardId,
@@ -148,9 +126,7 @@ export const TimerPopup = () => {
           is_running: newRunning,
           start_time: newRunning ? Date.now() : null,
         },
-        {
-          onConflict: "card_id,trello_token", // ← String única separada por vírgula
-        }
+        { onConflict: "card_id,trello_token" }
       );
 
       if (error) throw error;
@@ -158,9 +134,36 @@ export const TimerPopup = () => {
       setIsRunning(newRunning);
       t.closePopup();
     } catch (error) {
-      console.error("Erro ao salvar:", error);
+      console.error("Erro ao atualizar timer:", error);
     }
   };
+
+  if (needsAuth) {
+    return (
+      <div style={{ padding: 16, textAlign: "center" }}>
+        <p>Autorização necessária para usar o cronômetro</p>
+        <button
+          onClick={handleAuth}
+          style={{
+            background: "#1976d2",
+            color: "white",
+            padding: "8px 16px",
+            borderRadius: "4px",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Autorizar Agora
+        </button>
+      </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>
+    );
+  }
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+
+<body>
+  <button id="auth-btn">Autorizar</button>
+  <script src="https://p.trellocdn.com/power-up.min.js"></script>
+  <script>
+    const t = window.TrelloPowerUp.iframe({
+      appKey: "572ff9627c40e50897a1a5bbbf294289",
+      appName: "Teste",
+    });
+
+    document.getElementById("auth-btn").addEventListener("click", () => {
+      t.restApi.authorize({ scope: "read,write" })
+        .then(() => window.close());
+    });
+  </script>
+</body>
+
+</html>

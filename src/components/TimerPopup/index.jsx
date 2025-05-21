@@ -32,6 +32,7 @@ export const TimerPopup = () => {
     const initializeTimer = async () => {
       try {
         // Obter token e card ID
+        console.log("T tá funfando?", t);
         const trelloToken = await t.getRestApi().getToken();
         console.log("Trello Token 1:", trelloToken);
         const cardId = await t.card("id").get("id");

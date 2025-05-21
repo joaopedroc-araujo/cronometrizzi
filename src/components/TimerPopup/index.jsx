@@ -18,13 +18,18 @@ export const TimerPopup = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [t, setT] = useState(null);
+
+  useEffect(() => {
+    const trelloInstance = window.TrelloPowerUp.iframe({
+      appKey: TRELLO_TOKEN,
+      appName: "Teste",
+    });
+
+    setT(trelloInstance);
+  }, []);
 
   // Inicialização do Trello
-  const t = window.TrelloPowerUp.iframe({
-    appKey: TRELLO_TOKEN,
-    appName: "Teste",
-  });
-
   useEffect(() => {
     let channel;
     let interval;

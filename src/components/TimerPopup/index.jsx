@@ -68,6 +68,7 @@ export const TimerPopup = () => {
           .subscribe();
       } catch (error) {
         console.error("Erro:", error);
+      }
       // } finally {
       //   setLoading(false);
       // }

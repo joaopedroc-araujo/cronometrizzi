@@ -18,6 +18,9 @@ export const getSupabaseClient = (trelloToken, cardId) => {
       auth: {
         persistSession: false,
       },
+      db: {
+        schema: 'public'
+      }
     });
   }
   return supabaseInstance;

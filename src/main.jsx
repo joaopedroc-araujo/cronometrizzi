@@ -2,6 +2,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { getSupabaseClient } from "./supabaseClient";
+import { TRELLO_TOKEN } from "./components/TimerPopup";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -48,7 +49,7 @@ window.TrelloPowerUp.initialize(
           .from("timers")
           .select("is_running, start_time")
           .eq("card_id", cardId)
-          .single();
+          .maybeSingle();
 
         console.log("Data from Supabase:", data);
 
@@ -93,7 +94,7 @@ window.TrelloPowerUp.initialize(
     },
   },
   {
-    appKey: "572ff9627c40e50897a1a5bbbf294289",
+    appKey: TRELLO_TOKEN,
     appName: "Teste",
   }
 );

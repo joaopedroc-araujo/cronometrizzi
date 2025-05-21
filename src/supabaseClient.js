@@ -12,6 +12,9 @@ export const getSupabaseClient = (trelloToken, cardId) => {
         "X-Trello-Card-ID": cardId,
       },
     },
+    db: {
+      schema: "public",
+    },
     auth: {
       persistSession: false,
     },

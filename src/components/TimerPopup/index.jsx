@@ -12,25 +12,30 @@ function formatTime(ms) {
   )}:${String(seconds).padStart(2, "0")}`;
 }
 
+export const TRELLO_TOKEN = "572ff9627c40e50897a1a5bbbf294289";
+
 export const TimerPopup = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  // const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
 
-  // Inicialização com Trello Token
+  // Inicialização do Trello
   const t = window.TrelloPowerUp.iframe({
-    appKey: "572ff9627c40e50897a1a5bbbf294289",
+    appKey: TRELLO_TOKEN,
     appName: "Teste",
   });
-  const trelloToken = t.getRestApi().getToken();
-  const cardId = t.card("id").get("id");
-  const supabase = getSupabaseClient(trelloToken, cardId);
 
   useEffect(() => {
-    let channel; // ← Variável para controlar o canal
+    let channel;
+    let interval;
 
     const initializeTimer = async () => {
       try {
+        // Obter token e card ID
+        const trelloToken = await t.getRestApi().getToken();
+        const cardId = await t.card("id").get("id");
+        const supabase = getSupabaseClient(trelloToken, cardId);
+
         // Configurar contexto no Supabase
         await supabase.rpc("set_trello_context");
 
@@ -39,15 +44,22 @@ export const TimerPopup = () => {
           .from("timers")
           .select("is_running, start_time")
           .eq("card_id", cardId)
-          .single();
+          .maybeSingle();
 
         if (error) throw error;
 
+        // Configurar estado inicial
+        if (data?.is_running && data.start_time) {
+          setElapsed(Date.now() - data.start_time);
+          interval = setInterval(() => {
+            setElapsed((prev) => prev + 1000);
+          }, 1000);
+        }
         setIsRunning(data?.is_running || false);
-        setElapsed(data?.start_time ? Date.now() - data.start_time : 0);
 
+        // WebSocket para atualizações
         channel = supabase
-          .channel("timer-changes")
+          .channel("timer-updates")
           .on(
             "postgres_changes",
             {
@@ -64,41 +76,47 @@ export const TimerPopup = () => {
           .subscribe();
       } catch (error) {
         console.error("Erro:", error);
+      } finally {
+        setLoading(false);
       }
-      // } finally {
-      //   setLoading(false);
-      // }
     };
 
     initializeTimer();
 
-    // Cleanup
     return () => {
-      if (channel) channel.unsubscribe();
+      channel?.unsubscribe();
+      clearInterval(interval);
     };
   }, []);
 
   const handleToggle = async () => {
-    const newRunning = !isRunning;
-    const newStartTime = newRunning ? Date.now() : null;
-
     try {
-      const { data, error } = await supabase.from("card_timers").upsert({
-        card_id: t.getContext().card.id,
+      const trelloToken = await t.getRestApi().getToken();
+      const cardId = await t.card("id").get("id");
+      const supabase = getSupabaseClient(trelloToken, cardId);
+      const newRunning = !isRunning;
+
+      const { error } = await supabase.from("timers").upsert({
+        card_id: cardId,
         trello_token: trelloToken,
         is_running: newRunning,
-        start_time: newStartTime,
+        start_time: newRunning ? Date.now() : null,
       });
 
-      console.log("Dados atualizados:", data);
-
       if (error) throw error;
+
       setIsRunning(newRunning);
       t.closePopup();
     } catch (error) {
-      console.error("Erro:", error);
+      console.error("Erro ao salvar:", error);
     }
   };
+
+  if (loading) {
+    return (
+      <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>
+    );
+  }
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>

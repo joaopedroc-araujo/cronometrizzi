@@ -18,7 +18,10 @@ export const TimerPopup = () => {
   // const [loading, setLoading] = useState(true);
 
   // Inicialização com Trello Token
-  const t = window.TrelloPowerUp.iframe();
+  const t = window.TrelloPowerUp.iframe({
+    appKey: "572ff9627c40e50897a1a5bbbf294289",
+    appName: "Teste",
+  });
   const trelloToken = t.getRestApi().getToken();
   const cardId = t.card("id").get("id");
   const supabase = getSupabaseClient(trelloToken, cardId);

@@ -32,9 +32,9 @@ window.TrelloPowerUp.initialize({
   },
   "card-badges": async (t, opts) => {
     try {
+      const cardId = await t.card("id").get("id");
       const trelloToken = await t.getRestApi().getToken();
       console.log("Trello Token:", trelloToken);
-      const cardId = await t.card("id").get("id");
       console.log("Card ID:", cardId);
 
       const supabase = getSupabaseClient(trelloToken, cardId);

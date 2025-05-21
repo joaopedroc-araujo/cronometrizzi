@@ -20,10 +20,6 @@ export const TimerPopup = () => {
   const [loading, setLoading] = useState(true);
 
   // Inicialização do Trello
-  const t = window.TrelloPowerUp.iframe({
-    appKey: TRELLO_TOKEN,
-    appName: "Teste",
-  });
 
   useEffect(() => {
     let channel;
@@ -31,6 +27,11 @@ export const TimerPopup = () => {
 
     const initializeTimer = async () => {
       try {
+        const t = window.TrelloPowerUp.iframe({
+          appKey: TRELLO_TOKEN,
+          appName: "Teste",
+        });
+
         // Obter token e card ID
         const trelloToken = await t.getRestApi().getToken();
         const cardId = await t.card("id").get("id");
@@ -91,7 +92,11 @@ export const TimerPopup = () => {
 
   const handleToggle = async () => {
     try {
-      const t = window.TrelloPowerUp.iframe();
+      const t = window.TrelloPowerUp.iframe({
+        appKey: TRELLO_TOKEN,
+        appName: "Teste",
+      });
+
       const trelloToken = await t.getRestApi().getToken();
       const cardId = await t.card("id").get("id");
 

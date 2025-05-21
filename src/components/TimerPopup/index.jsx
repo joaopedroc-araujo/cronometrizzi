@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getSupabaseClient } from "../../supabaseClient";
 
 function formatTime(ms) {
@@ -38,59 +38,42 @@ export const TimerPopup = () => {
     initializeTrello();
   }, []);
 
-useEffect(() => {
-    const handleMessage = (event) => {
-      if (event.data === 'authorized') {
-        checkAuthStatus();
-      }
-    };
-
-    window.addEventListener('message', handleMessage);
-    return () => window.removeEventListener('message', handleMessage);
-  }, []);
-
+  // 2. Verificar autorização
   useEffect(() => {
-    const handleFocus = async () => {
-      if (document.visibilityState === 'visible') {
-        console.log("Popup focado");
-        await checkAuthStatus();
+    if (!t) return;
+
+    const checkAuthorization = async () => {
+      try {
+        const isAuthorized = await t.restApi.isAuthorized();
+        if (!isAuthorized) {
+          setNeedsAuth(true);
+          return;
+        }
+        
+        setNeedsAuth(false);
+        t.closePopup();
+        loadTimerData();
+      } catch (error) {
+        console.error("Erro na verificação de autorização:", error);
       }
     };
 
-    document.addEventListener('visibilitychange', handleFocus);
-    return () => document.removeEventListener('visibilitychange', handleFocus);
-  }, [checkAuthStatus, t]);
+    checkAuthorization();
+  }, [t]);
 
-  const checkAuthStatus = useCallback(async () => {
-    if (!t) return;
-    
-    try {
-      const isAuthorized = await t.restApi.isAuthorized();
-      setNeedsAuth(!isAuthorized);
-      
-      if (isAuthorized) {
-        loadTimerData();
-      }
-    } catch (error) {
-      console.error("Erro na verificação:", error);
-    }
-  },[t]);
-
+  // 3. Popup de autorização
   const handleAuth = async () => {
     try {
       await t.popup({
         title: "Autorização Necessária",
         url: "auth.html",
         height: 200,
+
       });
       const isAuthorized = await t.restApi.isAuthorized();
-      setNeedsAuth(!isAuthorized);
-      console.log("Autorizado:", isAuthorized);
-
       if (isAuthorized) {
         setNeedsAuth(false);
         await loadTimerData();
-        t.closePopup();
       };
     } catch (error) {
       console.error("Erro na autorização:", error);
@@ -181,13 +164,13 @@ useEffect(() => {
         </button>
       </div>
     );
-  };
+  }
 
-  // if (loading) {
-  //   return (
-  //     <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>
-  //   );
-  // }
+  if (loading) {
+    return (
+      <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>
+    );
+  }
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>

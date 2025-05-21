@@ -34,6 +34,7 @@ window.TrelloPowerUp.initialize({
     try {
       // Obter usuário autenticado
       const { data: { user } } = await supabase.auth.getUser();
+      console.log(user);
       
       if (!user) {
         return [{

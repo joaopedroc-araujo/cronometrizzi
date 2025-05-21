@@ -7,10 +7,11 @@
     "card-buttons",
     "card-badges",
     "callback",
-    "authorization-status"
+    "authorization-status",
+    "account"
   ],
   "permissions": {
-    "authorization": "read,write",
+    "authorization": "read",
     "shared": "read,write"
   },
   "baseUrl": "https://cronometrizzi-powerup.netlify.app/",

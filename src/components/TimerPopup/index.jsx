@@ -38,30 +38,43 @@ export const TimerPopup = () => {
     initializeTrello();
   }, []);
 
-  // 2. Verificar autorização
-  useEffect(() => {
-    if (!t) return;
-
-    const checkAuthAndLoad = async () => {
-      try {
-        const isAuth = await t.restApi.isAuthorized();
-
-        if (isAuth) {
-          await loadTimerData();
-          setNeedsAuth(false);
-        } else {
-          setNeedsAuth(true);
-        }
-      } catch (error) {
-        console.error("Erro na verificação:", error);
+useEffect(() => {
+    const handleMessage = (event) => {
+      if (event.data === 'authorized') {
+        checkAuthStatus();
       }
     };
 
-    // Verificar a cada 1 segundo se houve mudança
-    const interval = setInterval(checkAuthAndLoad, 1000);
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
 
-    return () => clearInterval(interval);
+  // Verificar estado de autorização quando a janela ganha foco
+  useEffect(() => {
+    const handleFocus = async () => {
+      if (document.visibilityState === 'visible') {
+        await checkAuthStatus();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleFocus);
+    return () => document.removeEventListener('visibilitychange', handleFocus);
   }, [t]);
+
+  const checkAuthStatus = async () => {
+    if (!t) return;
+    
+    try {
+      const isAuthorized = await t.restApi.isAuthorized();
+      setNeedsAuth(!isAuthorized);
+      
+      if (isAuthorized) {
+        loadTimerData();
+      }
+    } catch (error) {
+      console.error("Erro na verificação:", error);
+    }
+  };
 
   // 3. Popup de autorização
   const handleAuth = async () => {

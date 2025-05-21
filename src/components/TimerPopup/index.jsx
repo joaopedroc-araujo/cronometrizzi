@@ -91,6 +91,7 @@ export const TimerPopup = () => {
 
   const handleToggle = async () => {
     try {
+      const t = window.TrelloPowerUp.iframe();
       const trelloToken = await t.getRestApi().getToken();
       const cardId = await t.card("id").get("id");
 
@@ -100,6 +101,7 @@ export const TimerPopup = () => {
 
       const newRunning = !isRunning;
 
+      // Corrigir sintaxe do onConflict
       const { error } = await supabase.from("timers").upsert(
         {
           card_id: cardId,
@@ -108,7 +110,7 @@ export const TimerPopup = () => {
           start_time: newRunning ? Date.now() : null,
         },
         {
-          onConflict: "card_id,trello_token",
+          onConflict: "card_id,trello_token", // ← String única separada por vírgula
         }
       );
 
@@ -120,12 +122,6 @@ export const TimerPopup = () => {
       console.error("Erro ao salvar:", error);
     }
   };
-
-  if (loading) {
-    return (
-      <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>
-    );
-  }
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>

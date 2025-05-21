@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { getSupabaseClient } from "../../supabaseClient";
 
 function formatTime(ms) {
@@ -49,19 +49,19 @@ useEffect(() => {
     return () => window.removeEventListener('message', handleMessage);
   }, []);
 
-  // Verificar estado de autorização quando a janela ganha foco
   useEffect(() => {
     const handleFocus = async () => {
       if (document.visibilityState === 'visible') {
+        console.log("Popup focado");
         await checkAuthStatus();
       }
     };
 
     document.addEventListener('visibilitychange', handleFocus);
     return () => document.removeEventListener('visibilitychange', handleFocus);
-  }, [t]);
+  }, [checkAuthStatus, t]);
 
-  const checkAuthStatus = async () => {
+  const checkAuthStatus = useCallback(async () => {
     if (!t) return;
     
     try {
@@ -74,9 +74,8 @@ useEffect(() => {
     } catch (error) {
       console.error("Erro na verificação:", error);
     }
-  };
+  },[t]);
 
-  // 3. Popup de autorização
   const handleAuth = async () => {
     try {
       await t.popup({
@@ -87,6 +86,7 @@ useEffect(() => {
       const isAuthorized = await t.restApi.isAuthorized();
       setNeedsAuth(!isAuthorized);
       console.log("Autorizado:", isAuthorized);
+
       if (isAuthorized) {
         setNeedsAuth(false);
         await loadTimerData();
@@ -181,7 +181,7 @@ useEffect(() => {
         </button>
       </div>
     );
-  }
+  };
 
   // if (loading) {
   //   return (

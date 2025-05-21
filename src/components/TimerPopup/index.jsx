@@ -21,13 +21,39 @@ export const TimerPopup = () => {
   const [t, setT] = useState(null);
 
   useEffect(() => {
-    const trelloInstance = window.TrelloPowerUp.iframe({
-      appKey: TRELLO_TOKEN,
-      appName: "Teste",
-    });
+    const initializeTrello = async () => {
+      try {
+        const trelloInstance = await window.TrelloPowerUp.iframe({
+          appKey: "572ff9627c40e50897a1a5bbbf294289",
+          appName: "Teste",
+        }).ready();
 
-    setT(trelloInstance);
+        setT(trelloInstance);
+      } catch (error) {
+        console.error("Falha na inicialização do Trello:", error);
+      }
+    };
+
+    initializeTrello();
   }, []);
+
+  const getTrelloToken = async () => {
+    if (!t) return null;
+
+    try {
+      // Método correto de acesso ao token
+      const token = await t.restApi.getToken();
+      if (!token) throw new Error("Token não disponível");
+      return token;
+    } catch (error) {
+      console.error("Erro ao obter token:", error);
+      await t.alert({
+        message: "Autorização necessária! Por favor, recarregue o card.",
+        duration: 5,
+      });
+      return null;
+    }
+  };
 
   // Inicialização do Trello
   useEffect(() => {
@@ -38,11 +64,13 @@ export const TimerPopup = () => {
     const initializeTimer = async () => {
       try {
         // Obter token e card ID
+        const token = await getTrelloToken();
+        if (!token) return;
+
         console.log("T tá funfando?", t);
-        const trelloToken = await t.getRestApi();
-        console.log("Trello Token 1:", trelloToken);
+        console.log("Trello Token 1:", token);
         const cardId = await t.card("id").get("id");
-        const supabase = getSupabaseClient(trelloToken, cardId);
+        const supabase = getSupabaseClient(token, cardId);
 
         // Configurar contexto no Supabase
         await supabase.rpc("set_trello_context");
@@ -101,11 +129,12 @@ export const TimerPopup = () => {
     if (!t) return;
 
     try {
-      const trelloToken = await t.getRestApi();
-      console.log("Trello Token 2:", trelloToken);
+      const token = await getTrelloToken();
+      if (!token) return;
+      console.log("Trello Token 2:", token);
       const cardId = await t.card("id").get("id");
 
-      const supabase = getSupabaseClient(trelloToken, cardId);
+      const supabase = getSupabaseClient(token, cardId);
 
       await supabase.rpc("set_trello_context");
 
@@ -115,7 +144,7 @@ export const TimerPopup = () => {
       const { error } = await supabase.from("timers").upsert(
         {
           card_id: cardId,
-          trello_token: trelloToken,
+          trello_token: token,
           is_running: newRunning,
           start_time: newRunning ? Date.now() : null,
         },

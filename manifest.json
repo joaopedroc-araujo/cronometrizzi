@@ -3,6 +3,7 @@
   "version": "1.0",
   "manifestVersion": 1,
   "author": "Seu Nome",
+  "apiKey": "572ff9627c40e50897a1a5bbbf294289",
   "capabilities": [
     "card-buttons",
     "card-badges",

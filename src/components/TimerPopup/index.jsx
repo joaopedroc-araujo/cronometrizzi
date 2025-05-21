@@ -31,6 +31,7 @@ export const TimerPopup = () => {
 
   // Inicialização do Trello
   useEffect(() => {
+    if (!t) return;
     let channel;
     let interval;
 
@@ -94,9 +95,11 @@ export const TimerPopup = () => {
       channel?.unsubscribe();
       clearInterval(interval);
     };
-  }, []);
+  }, [t]);
 
   const handleToggle = async () => {
+    if (!t) return;
+
     try {
       const trelloToken = await t.getRestApi().getToken();
       console.log("Trello Token 2:", trelloToken);

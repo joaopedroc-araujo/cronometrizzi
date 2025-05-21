@@ -42,22 +42,25 @@ export const TimerPopup = () => {
   useEffect(() => {
     if (!t) return;
 
-    const checkAuthorization = async () => {
+    const checkAuthAndLoad = async () => {
       try {
-        const isAuthorized = await t.restApi.isAuthorized();
-        if (!isAuthorized) {
+        const isAuth = await t.restApi.isAuthorized();
+
+        if (isAuth) {
+          await loadTimerData();
+          setNeedsAuth(false);
+        } else {
           setNeedsAuth(true);
-          return;
         }
-        
-        setNeedsAuth(false);
-        loadTimerData();
       } catch (error) {
-        console.error("Erro na verificação de autorização:", error);
+        console.error("Erro na verificação:", error);
       }
     };
 
-    checkAuthorization();
+    // Verificar a cada 1 segundo se houve mudança
+    const interval = setInterval(checkAuthAndLoad, 1000);
+
+    return () => clearInterval(interval);
   }, [t]);
 
   // 3. Popup de autorização

@@ -83,12 +83,14 @@ useEffect(() => {
         title: "Autorização Necessária",
         url: "auth.html",
         height: 200,
-
       });
       const isAuthorized = await t.restApi.isAuthorized();
+      setNeedsAuth(!isAuthorized);
+      console.log("Autorizado:", isAuthorized);
       if (isAuthorized) {
         setNeedsAuth(false);
         await loadTimerData();
+        t.closePopup();
       };
     } catch (error) {
       console.error("Erro na autorização:", error);
@@ -181,11 +183,11 @@ useEffect(() => {
     );
   }
 
-  if (loading) {
-    return (
-      <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>
-    );
-  }
+  // if (loading) {
+  //   return (
+  //     <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>
+  //   );
+  // }
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>

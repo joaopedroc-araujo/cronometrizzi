@@ -1,7 +1,7 @@
 // src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { getSupabaseClient, supabase } from "./supabaseClient";
+import { getSupabaseClient } from "./supabaseClient";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -14,43 +14,65 @@ function formatTime(ms) {
   )}:${String(seconds).padStart(2, "0")}`;
 }
 
-window.TrelloPowerUp.initialize({
-  "card-buttons": function (t, opts) {
-    return [
-      {
-        icon: "https://i.imgur.com/9ZZ8rf3.png",
-        text: "Cronômetro",
-        callback: function (t) {
-          return t.popup({
-            title: "Controle do Cronômetro",
-            url: "popup.html",
-            height: 180,
-          });
+window.TrelloPowerUp.initialize(
+  {
+    "card-buttons": function (t, opts) {
+      return [
+        {
+          icon: "https://i.imgur.com/9ZZ8rf3.png",
+          text: "Cronômetro",
+          callback: function (t) {
+            return t.popup({
+              title: "Controle do Cronômetro",
+              url: "popup.html",
+              height: 180,
+            });
+          },
         },
-      },
-    ];
-  },
-  "card-badges": async (t, opts) => {
-    try {
-      const cardId = await t.card("id").get("id");
-      const trelloToken = await t.getRestApi().getToken();
-      console.log("Trello Token:", trelloToken);
-      console.log("Card ID:", cardId);
+      ];
+    },
+    "card-badges": async (t, opts) => {
+      try {
+        const cardId = await t.card("id").get("id");
 
-      const supabase = getSupabaseClient(trelloToken, cardId);
-      console.log("Supabase Client:", supabase);
-      const supabaseRpc = await supabase.rpc("set_trello_context");
-      console.log("Context set in Supabase", supabaseRpc);
+        const trelloToken = await t.getRestApi().getToken();
+        console.log("Trello Token:", trelloToken);
+        console.log("Card ID:", cardId);
 
-      const { data, error } = await supabase
-        .from("timers")
-        .select("is_running, start_time")
-        .eq("card_id", cardId)
-        .single();
+        const supabase = getSupabaseClient(trelloToken, cardId);
+        console.log("Supabase Client:", supabase);
+        const supabaseRpc = await supabase.rpc("set_trello_context");
+        console.log("Context set in Supabase", supabaseRpc);
 
-      console.log("Data from Supabase:", data);
+        const { data, error } = await supabase
+          .from("timers")
+          .select("is_running, start_time")
+          .eq("card_id", cardId)
+          .single();
 
-      if (error || !data) {
+        console.log("Data from Supabase:", data);
+
+        if (error || !data) {
+          return [
+            {
+              text: "⏱ Parado",
+              color: "red",
+              refresh: 60,
+            },
+          ];
+        }
+
+        if (data.is_running && data.start_time) {
+          const elapsed = Date.now() - data.start_time;
+          return [
+            {
+              text: `⏱ ${formatTime(elapsed)}`,
+              color: "green",
+              refresh: 1,
+            },
+          ];
+        }
+
         return [
           {
             text: "⏱ Parado",
@@ -58,38 +80,23 @@ window.TrelloPowerUp.initialize({
             refresh: 60,
           },
         ];
-      }
-
-      if (data.is_running && data.start_time) {
-        const elapsed = Date.now() - data.start_time;
+      } catch (error) {
+        console.error("Erro no badge:", error);
         return [
           {
-            text: `⏱ ${formatTime(elapsed)}`,
-            color: "green",
-            refresh: 1,
+            text: "⏱ Erro",
+            color: "yellow",
+            refresh: 60,
           },
         ];
       }
-
-      return [
-        {
-          text: "⏱ Parado",
-          color: "red",
-          refresh: 60,
-        },
-      ];
-    } catch (error) {
-      console.error("Erro no badge:", error);
-      return [
-        {
-          text: "⏱ Erro",
-          color: "yellow",
-          refresh: 60,
-        },
-      ];
-    }
+    },
   },
-});
+  {
+    appKey: "572ff9627c40e50897a1a5bbbf294289",
+    appName: "Teste",
+  }
+);
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode></React.StrictMode>

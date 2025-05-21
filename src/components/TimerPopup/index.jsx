@@ -123,10 +123,12 @@ export const TimerPopup = () => {
 
       const cardId = await t.card("id").get("id");
       const supabase = getSupabaseClient(token, cardId);
+      console.log('Supabase Client:', supabase);
 
       const newRunning = !isRunning;
+      console.log("Novo estado do cronômetro:", newRunning);
 
-      const { error } = await supabase.from("timers").upsert(
+      const { data,error } = await supabase.from("timers").upsert(
         {
           card_id: cardId,
           trello_token: token,
@@ -136,7 +138,8 @@ export const TimerPopup = () => {
         { onConflict: "card_id,trello_token" }
       );
 
-      if (error) throw error;
+      if (error) throw ('erro aqui', error);
+      console.log("Dados atualizados no Supabase:", data);
 
       setIsRunning(newRunning);
       t.closePopup();

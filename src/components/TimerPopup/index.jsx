@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getSupabaseClient, supabase } from "../../supabaseClient";
+import { getSupabaseClient } from "../../supabaseClient";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -20,20 +20,16 @@ export const TimerPopup = () => {
   // Inicialização com Trello Token
   const t = window.TrelloPowerUp.iframe();
   const trelloToken = t.getRestApi().getToken();
+  const cardId = t.card("id").get("id");
+  const supabase = getSupabaseClient(trelloToken, cardId);
 
   // Configuração do Supabase
 
   useEffect(() => {
-    const t = window.TrelloPowerUp.iframe(); // ← Movido para fora da função async
     let channel; // ← Variável para controlar o canal
 
     const initializeTimer = async () => {
       try {
-        const trelloToken = await t.getRestApi().getToken();
-        const cardId = await t.card("id").get("id");
-
-        const supabase = getSupabaseClient(trelloToken, cardId);
-
         // Configurar contexto no Supabase
         await supabase.rpc("set_trello_context");
 

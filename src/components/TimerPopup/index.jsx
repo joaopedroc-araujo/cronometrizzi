@@ -22,45 +22,54 @@ export const TimerPopup = () => {
     
     const initializeAuthAndData = async () => {
       try {
-        // 1. Obter email do Trello
-        const { email } = await t.member('email');
+        // 1. Esperar Trello estar pronto
+        await t.ready();
+
+        // 2. Obter email do Trello com tratamento de erro
+        const member = await t.member('email').catch(error => {
+          throw new Error(`Erro ao obter email: ${error.message}`);
+        });
         
-        // 2. Login automático no Supabase
+        if (!member?.email) throw new Error("Email do usuário não disponível");
+
+        // 3. Login automático no Supabase
         const { error: authError } = await supabase.auth.signInWithOtp({
-          email,
+          email: member.email,
           options: {
             shouldCreateUser: true,
             emailRedirectTo: window.location.href
           }
         });
 
-        if (authError) throw authError;
+        if (authError) throw new Error(`Erro de autenticação: ${authError.message}`);
 
-        // 3. Obter dados do cronômetro
+        // 4. Obter dados do cronômetro com tratamento de erro
         const { data: timerData, error: fetchError } = await supabase
           .from('card_timers')
           .select('is_running, start_time')
           .eq('card_id', t.getContext().card.id)
           .single();
 
-        if (fetchError) throw fetchError;
+        if (fetchError) throw new Error(`Erro ao buscar dados: ${fetchError.message}`);
 
-        // 4. Atualizar estado
-        setIsRunning(timerData?.is_running || false);
+        // 5. Atualizar estado do cronômetro
+        const running = timerData?.is_running || false;
+        const start = timerData?.start_time || 0;
         
-        if (timerData?.is_running && timerData?.start_time) {
-          const initialElapsed = Date.now() - timerData.start_time;
+        setIsRunning(running);
+        
+        if (running && start) {
+          const initialElapsed = Date.now() - start;
           setElapsed(initialElapsed);
           
-          // Atualizar tempo a cada segundo
           interval = setInterval(() => {
             setElapsed(prev => prev + 1000);
           }, 1000);
         }
 
       } catch (error) {
-        console.error("Erro:", error);
-        setAuthError(error.message || "Erro ao carregar dados");
+        console.error("Erro crítico:", error);
+        setAuthError(error.message);
       } finally {
         setLoading(false);
       }
@@ -73,15 +82,16 @@ export const TimerPopup = () => {
 
   const handleToggle = async () => {
     try {
+      // 1. Verificar autenticação
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) throw new Error("Usuário não autenticado");
+
+      // 2. Atualizar estado
       const newRunning = !isRunning;
       const newStartTime = newRunning ? Date.now() : 0;
 
-      // 1. Obter usuário autenticado
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) throw new Error("Usuário não autenticado");
-
-      // 2. Salvar no Supabase
-      const { error } = await supabase
+      // 3. Persistir no Supabase
+      const { error: upsertError } = await supabase
         .from('card_timers')
         .upsert({
           card_id: t.getContext().card.id,
@@ -90,54 +100,90 @@ export const TimerPopup = () => {
           start_time: newStartTime
         });
 
-      if (error) throw error;
+      if (upsertError) throw new Error(`Erro ao salvar: ${upsertError.message}`);
 
-      // 3. Atualizar estado local
+      // 4. Atualizar UI
       setIsRunning(newRunning);
       setElapsed(0);
       t.closePopup();
 
     } catch (error) {
-      console.error("Erro ao salvar:", error);
+      console.error("Erro na ação:", error);
       setAuthError(error.message);
     }
   };
 
   if (authError) {
     return (
-      <div style={{ padding: 16, color: "red", textAlign: "center" }}>
-        {authError}
+      <div style={{ 
+        padding: 16, 
+        color: "red", 
+        textAlign: "center",
+        display: "flex",
+        flexDirection: "column",
+        gap: "8px"
+      }}>
+        <p>{authError}</p>
         <button 
           onClick={() => window.location.reload()}
-          style={{ marginTop: 8, padding: 8 }}
+          style={{ 
+            padding: "8px 16px",
+            background: "#0079bf",
+            color: "white",
+            border: "none",
+            borderRadius: "4px",
+            cursor: "pointer"
+          }}
         >
-          Recarregar
+          Tentar novamente
         </button>
       </div>
     );
   }
 
   if (loading) {
-    return <div style={{ padding: 16, textAlign: "center" }}>Carregando...</div>;
+    return (
+      <div style={{ 
+        padding: 16, 
+        textAlign: "center",
+        display: "flex",
+        justifyContent: "center",
+        alignItems: "center",
+        height: "100%"
+      }}>
+        <div className="loader"></div>
+      </div>
+    );
   }
 
   return (
-    <div style={{ padding: 16, textAlign: "center" }}>
-      <h3>{isRunning ? formatTime(elapsed) : "00:00:00"}</h3>
+    <div style={{ 
+      padding: 16, 
+      textAlign: "center",
+      display: "flex",
+      flexDirection: "column",
+      gap: "16px"
+    }}>
+      <h3 style={{ margin: 0 }}>
+        {isRunning ? formatTime(elapsed) : "00:00:00"}
+      </h3>
+      
       <button
         onClick={handleToggle}
         style={{
           background: isRunning ? "#e53935" : "#43a047",
           color: "#fff",
           border: "none",
-          borderRadius: 4,
-          padding: "8px 16px",
+          borderRadius: "8px",
+          padding: "12px 24px",
           cursor: "pointer",
-          fontSize: 16,
-          marginTop: 8,
+          fontSize: "16px",
+          fontWeight: "bold",
+          transition: "background 0.3s ease",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
         }}
       >
-        {isRunning ? "Parar" : "Iniciar"}
+        {isRunning ? "⏹ Parar" : "▶ Iniciar"}
       </button>
     </div>
   );

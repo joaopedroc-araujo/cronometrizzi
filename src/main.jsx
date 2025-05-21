@@ -1,6 +1,7 @@
 // src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { supabase } from "./supabaseClient"; // Importe o cliente Supabase
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -29,55 +30,59 @@ window.TrelloPowerUp.initialize({
       },
     ];
   },
-  "card-badges": function (t, opts) {
-    return t
-      .get("card", "shared", ["isRunning", "startTime"], { force: true })
-      .then((data) => {
-        if (!data) {
-          console.error("Dados completamente ausentes");
-          return t
-            .set("card", "shared", {
-              isRunning: false,
-              startTime: 0,
-            })
-            .then(() => ({ isRunning: false, startTime: 0 }));
-        }
+  "card-badges": async (t, opts) => {
+    try {
+      // Obter usuário autenticado
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        return [{
+          text: "⏱ Login",
+          color: "yellow",
+          refresh: 60
+        }];
+      }
 
-        // Log detalhado para debug
-        console.log("Badge - Dados recebidos:", {
-          isRunning: data.isRunning,
-          startTime: data.startTime,
-          currentTime: Date.now(),
-        });
+      // Buscar dados do Supabase
+      const { data, error } = await supabase
+        .from('card_timers')
+        .select('is_running, start_time')
+        .eq('card_id', t.getContext().card.id)
+        .eq('user_id', user.id)
+        .single();
 
-        if (data.isRunning && data.startTime) {
-          const elapsed = Date.now() - data.startTime;
-          return [
-            {
-              text: `⏱ ${formatTime(elapsed)}`,
-              color: "green",
-              refresh: 1, // Atualiza a cada 1 segundo quando rodando
-            },
-          ];
-        }
-        return [
-          {
-            text: "⏱ Parado",
-            color: "red",
-            refresh: 60, // Atualiza a cada 60 segundos quando parado
-          },
-        ];
-      })
-      .catch((error) => {
-        console.error("Erro no badge:", error);
-        return [
-          {
-            text: "⏱ Erro",
-            color: "yellow",
-          },
-        ];
-      });
-  },
+      if (error || !data) {
+        return [{
+          text: "⏱ Parado",
+          color: "red",
+          refresh: 60
+        }];
+      }
+
+      if (data.is_running && data.start_time) {
+        const elapsed = Date.now() - data.start_time;
+        return [{
+          text: `⏱ ${formatTime(elapsed)}`,
+          color: "green",
+          refresh: 1 // Atualiza a cada 1 segundo
+        }];
+      }
+      
+      return [{
+        text: "⏱ Parado",
+        color: "red",
+        refresh: 60
+      }];
+
+    } catch (error) {
+      console.error("Erro no badge:", error);
+      return [{
+        text: "⏱ Erro",
+        color: "yellow",
+        refresh: 60
+      }];
+    }
+  }
 });
 
 ReactDOM.createRoot(document.getElementById("root")).render(

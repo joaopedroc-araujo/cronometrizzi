@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient"; // Importe o cliente Supabase
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -17,41 +18,38 @@ export const TimerPopup = () => {
   const [loading, setLoading] = useState(true);
 
   const t = window.TrelloPowerUp.iframe();
-  console.log("TimerPopup renderizou", t);
 
   useEffect(() => {
     let interval;
     async function fetchData() {
       try {
-        let attempts = 0;
-        let data;
-
-        while (attempts < 3 && !data) {
-          data = await t.get("card", "shared", ["isRunning", "startTime"]);
-          if (!data) {
-            await new Promise((resolve) => setTimeout(resolve, 500));
-            attempts++;
-          }
+        // Obter usuário autenticado
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          throw new Error("Usuário não autenticado");
         }
 
-        if (!data) {
-          console.error("Falha após 3 tentativas. Inicializando manualmente.");
-          data = { isRunning: false, startTime: 0 };
-          await t.set("card", "shared", data);
-        }
-        const running = data?.isRunning || false;
-        const start = data?.startTime || 0;
+        // Buscar dados do Supabase
+        const { data, error } = await supabase
+          .from('card_timers')
+          .select('is_running, start_time')
+          .eq('card_id', t.getContext().card.id)
+          .eq('user_id', user.id)
+          .single();
+
+        if (error) throw error;
+
+        const running = data?.is_running || false;
+        const start = data?.start_time || 0;
 
         setIsRunning(running);
         setLoading(false);
 
         if (running && start) {
-          // Calcula o tempo decorrido imediatamente
           setElapsed(Date.now() - start);
-
-          // Atualiza a cada segundo
           interval = setInterval(() => {
-            setElapsed((prev) => prev + 1000);
+            setElapsed(Date.now() - start);
           }, 1000);
         }
       } catch (error) {
@@ -66,23 +64,30 @@ export const TimerPopup = () => {
 
   const handleToggle = async () => {
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert("Por favor, faça login primeiro!");
+        return;
+      }
+
       const newRunning = !isRunning;
       const newStartTime = newRunning ? Date.now() : 0;
 
-      // Persiste os dados com confirmação
-      await t.set("card", "shared", {
-        isRunning: newRunning,
-        startTime: newStartTime,
-      });
+      // Salvar no Supabase
+      const { error } = await supabase
+        .from('card_timers')
+        .upsert({
+          card_id: t.getContext().card.id,
+          user_id: user.id,
+          is_running: newRunning,
+          start_time: newStartTime
+        });
 
-      // Aguarda 300ms para garantir persistência
-      await new Promise((resolve) => setTimeout(resolve, 300));
+      if (error) throw error;
 
-      // Fecha o popup
+      setIsRunning(newRunning);
       t.closePopup();
 
-      // Atualiza o badge manualmente
-      t.render(() => {});
     } catch (error) {
       console.error("Erro ao salvar:", error);
     }

@@ -39,7 +39,7 @@ export const TimerPopup = () => {
       try {
         // Obter token e card ID
         console.log("T tá funfando?", t);
-        const trelloToken = await t.getRestApi().getToken();
+        const trelloToken = await t.getRestApi();
         console.log("Trello Token 1:", trelloToken);
         const cardId = await t.card("id").get("id");
         const supabase = getSupabaseClient(trelloToken, cardId);
@@ -101,7 +101,7 @@ export const TimerPopup = () => {
     if (!t) return;
 
     try {
-      const trelloToken = await t.getRestApi().getToken();
+      const trelloToken = await t.getRestApi();
       console.log("Trello Token 2:", trelloToken);
       const cardId = await t.card("id").get("id");
 

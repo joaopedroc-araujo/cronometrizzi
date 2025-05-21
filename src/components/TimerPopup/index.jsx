@@ -49,6 +49,8 @@ export const TimerPopup = () => {
           setNeedsAuth(true);
           return;
         }
+        
+        setNeedsAuth(false);
         loadTimerData();
       } catch (error) {
         console.error("Erro na verificação de autorização:", error);
@@ -65,9 +67,13 @@ export const TimerPopup = () => {
         title: "Autorização Necessária",
         url: "auth.html",
         height: 200,
+
       });
-      setNeedsAuth(false);
-      loadTimerData();
+      const isAuthorized = await t.restApi.isAuthorized();
+      if (isAuthorized) {
+        setNeedsAuth(false);
+        await loadTimerData();
+      };
     } catch (error) {
       console.error("Erro na autorização:", error);
     }

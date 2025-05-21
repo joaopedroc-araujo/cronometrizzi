@@ -93,15 +93,24 @@ export const TimerPopup = () => {
     try {
       const trelloToken = await t.getRestApi().getToken();
       const cardId = await t.card("id").get("id");
+
       const supabase = getSupabaseClient(trelloToken, cardId);
+
+      await supabase.rpc("set_trello_context");
+
       const newRunning = !isRunning;
 
-      const { error } = await supabase.from("timers").upsert({
-        card_id: cardId,
-        trello_token: trelloToken,
-        is_running: newRunning,
-        start_time: newRunning ? Date.now() : null,
-      });
+      const { error } = await supabase.from("timers").upsert(
+        {
+          card_id: cardId,
+          trello_token: trelloToken,
+          is_running: newRunning,
+          start_time: newRunning ? Date.now() : null,
+        },
+        {
+          onConflict: "card_id,trello_token",
+        }
+      );
 
       if (error) throw error;
 

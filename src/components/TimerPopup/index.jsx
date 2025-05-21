@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient"; // Importe o cliente Supabase
+import { supabase } from "../../supabaseClient";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);

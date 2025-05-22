@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
 
 function formatTime(ms) {
+  if (ms < 0) ms = 0;
   const totalSeconds = Math.floor(ms / 1000);
-  const hours = Math.floor(totalSeconds / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-  const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-    2,
-    "0"
-  )}:${String(seconds).padStart(2, "0")}`;
+
+  const clampedSeconds = Math.min(totalSeconds, 99 * 3600 + 59 * 60 + 59);
+
+  const hours = Math.floor(clampedSeconds / 3600);
+  const minutes = Math.floor((clampedSeconds % 3600) / 60);
+  const seconds = clampedSeconds % 60;
+
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
 
 export const TRELLO_TOKEN = "572ff9627c40e50897a1a5bbbf294289";
@@ -78,7 +80,7 @@ export const TimerPopup = () => {
       try {
         await t.set('card', 'private', 'timerData', {
           isRunning: false,
-          startTime: Date.now() - elapsed,
+          startTime: elapsed,
         });
 
         setIsRunning(false);

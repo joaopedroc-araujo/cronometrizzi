@@ -117,7 +117,7 @@ export const TimerPopup = () => {
         <button
           onClick={handleToggle}
           style={{
-            background: isRunning ? "#e53935" : "#43a047",
+            background: isRunning ? "##f9a825" : "#43a047",
             color: "#fff",
             border: "none",
             borderRadius: 4,

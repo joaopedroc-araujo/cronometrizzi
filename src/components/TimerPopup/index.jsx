@@ -33,26 +33,30 @@ export const TimerPopup = () => {
           isRunning: false,
           startTime: 0
         });
-        console.log("Dados do cronômetro:", timerData);
+
+        const currentElapsed = timerData.isRunning
+          ? Date.now() - timerData.startTime
+          : timerData.startTime;
+
+        setElapsed(currentElapsed);
+        setIsRunning(timerData.isRunning);
 
         if (timerData.isRunning) {
-          const currentElapsed = Date.now() - timerData.startTime;
-          setElapsed(currentElapsed);
           const interval = setInterval(() => {
-            setElapsed(prev => prev + 1000);
+            setElapsed(Date.now() - timerData.startTime);
           }, 1000);
 
           return () => clearInterval(interval);
         }
-
-        setIsRunning(timerData.isRunning);
       } catch (error) {
         console.error("Erro ao carregar:", error);
       }
     };
 
-    loadTimerState();
+    t && loadTimerState();
   }, [t]);
+
+
 
   const handleToggle = async () => {
     if (!isRunning) {
@@ -70,10 +74,11 @@ export const TimerPopup = () => {
         console.error("Erro ao iniciar:", error);
       }
     } else {
+
       try {
         await t.set('card', 'private', 'timerData', {
           isRunning: false,
-          startTime: 0
+          startTime: Date.now() - elapsed,
         });
 
         setIsRunning(false);

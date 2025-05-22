@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 function formatTime(ms) {
   if (ms < 0) ms = 0;
   const totalSeconds = Math.floor(ms / 1000);
-
   const clampedSeconds = Math.min(totalSeconds, 99 * 3600 + 59 * 60 + 59);
 
   const hours = Math.floor(clampedSeconds / 3600);
@@ -12,7 +11,6 @@ function formatTime(ms) {
 
   return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 }
-
 export const TRELLO_TOKEN = "572ff9627c40e50897a1a5bbbf294289";
 
 export const TimerPopup = () => {
@@ -37,7 +35,10 @@ export const TimerPopup = () => {
         });
 
         if (timerData.isRunning) {
-          const currentElapsed = Date.now() - timerData.startTime;
+          const currentElapsed = timerData.isRunning
+            ? Date.now() - timerData.startTime
+            : timerData.startTime;
+
           setElapsed(currentElapsed);
 
           const interval = setInterval(() => {
@@ -105,6 +106,8 @@ export const TimerPopup = () => {
       console.error("Erro ao parar:", error);
     }
   };
+
+  console.log(elapsed);
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>

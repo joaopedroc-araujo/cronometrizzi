@@ -36,20 +36,20 @@ export const TimerPopup = () => {
           startTime: 0
         });
 
-        const currentElapsed = timerData.isRunning
-          ? Date.now() - timerData.startTime
-          : timerData.startTime;
-
-        setElapsed(currentElapsed);
-        setIsRunning(timerData.isRunning);
-
         if (timerData.isRunning) {
+          const currentElapsed = Date.now() - timerData.startTime;
+          setElapsed(currentElapsed);
+
           const interval = setInterval(() => {
             setElapsed(Date.now() - timerData.startTime);
           }, 1000);
 
           return () => clearInterval(interval);
+        } else {
+          setElapsed(timerData.startTime);
         }
+
+        setIsRunning(timerData.isRunning);
       } catch (error) {
         console.error("Erro ao carregar:", error);
       }
@@ -57,6 +57,7 @@ export const TimerPopup = () => {
 
     t && loadTimerState();
   }, [t]);
+
 
 
 

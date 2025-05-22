@@ -20,7 +20,7 @@ export const TimerPopup = () => {
   useEffect(() => {
     const trelloPowerUp = window.TrelloPowerUp.iframe({
       appKey: TRELLO_TOKEN,
-      appName: "Teste",
+      appName: "Cronometrizzi",
     });
     setT(trelloPowerUp);
   }, []);

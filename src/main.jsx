@@ -55,7 +55,7 @@ window.TrelloPowerUp.initialize(
         console.error("Erro ao carregar:", error);
         return [{
           text: "⏱ Erro",
-          color: "yellow",
+          color: "red",
           refresh: 60
         }];
       }

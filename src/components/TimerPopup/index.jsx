@@ -58,9 +58,6 @@ export const TimerPopup = () => {
     t && loadTimerState();
   }, [t]);
 
-
-
-
   const handleToggle = async () => {
     if (!isRunning) {
       const newStartTime = Date.now() - elapsed;

@@ -55,48 +55,91 @@ export const TimerPopup = () => {
   }, [t]);
 
   const handleToggle = async () => {
-    const newRunning = !isRunning;
-    const newStartTime = newRunning ? Date.now() : 0;
+    if (!isRunning) {
+      const newStartTime = Date.now() - elapsed;
 
-    try {
-      // Salva estado no próprio card
-      await t.set('card', 'private', 'timerData', {
-        isRunning: newRunning,
-        startTime: newStartTime
-      });
+      try {
+        await t.set('card', 'private', 'timerData', {
+          isRunning: true,
+          startTime: newStartTime
+        });
 
-      t.render(() => t.sizeTo('#app'));
+        setIsRunning(true);
+      }
+      catch (error) {
+        console.error("Erro ao iniciar:", error);
+      }
+    } else {
+      try {
+        await t.set('card', 'private', 'timerData', {
+          isRunning: false,
+          startTime: 0
+        });
 
-      setIsRunning(true);
-      t.closePopup();
-    } catch (error) {
-      console.error("Erro ao salvar:", error);
-      t.alert({
-        message: "Erro ao atualizar o cronômetro!",
-        duration: 5
-      });
+        setIsRunning(false);
+      } catch (error) {
+        console.error("Erro ao pausar:", error);
+      }
     }
+
+    t.closePopup();
   };
 
+
+  const handleStop = async () => {
+    try {
+      await t.set('card', 'private', 'timerData', {
+        isRunning: false,
+        startTime: 0
+      });
+
+      setElapsed(0);
+      setIsRunning(false);
+      t.closePopup();
+    } catch (error) {
+      console.error("Erro ao parar:", error);
+    }
+  };
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>
       <h3>{formatTime(elapsed)}</h3>
-      <button
-        onClick={handleToggle}
-        style={{
-          background: isRunning ? "#e53935" : "#43a047",
-          color: "#fff",
-          border: "none",
-          borderRadius: 4,
-          padding: "8px 16px",
-          cursor: "pointer",
-          fontSize: 16,
-          marginTop: 8,
-        }}
-      >
-        {isRunning ? "Parar" : "Iniciar"}
-      </button>
-    </div>
+
+      <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+        <button
+          onClick={handleToggle}
+          style={{
+            background: isRunning ? "#e53935" : "#43a047",
+            color: "#fff",
+            border: "none",
+            borderRadius: 4,
+            padding: "8px 16px",
+            cursor: "pointer",
+            fontSize: 16,
+            marginTop: 8,
+          }}
+        >
+          {isRunning ? "Pausar" : "Iniciar"}
+        </button>
+
+        {isRunning &&
+          <button
+            onClick={handleStop}
+            style={{
+              background: "#e53935",
+              color: "#fff",
+              border: "none",
+              borderRadius: 4,
+              padding: "8px 16px",
+              cursor: "pointer",
+              fontSize: 16,
+              marginTop: 8,
+            }}
+          >
+            Parar
+          </button>
+        }
+      </div>
+    </div >
   );
 };

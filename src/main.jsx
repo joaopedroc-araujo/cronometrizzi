@@ -1,4 +1,3 @@
-// src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { TRELLO_TOKEN } from "./components/TimerPopup";
@@ -16,7 +15,7 @@ function formatTime(ms) {
 
 window.TrelloPowerUp.initialize(
   {
-    "card-buttons": function (t, opts) {
+    "card-buttons": function () {
       return [
         {
           icon: "https://i.imgur.com/9ZZ8rf3.png",
@@ -35,32 +34,22 @@ window.TrelloPowerUp.initialize(
       try {
         const timerData = await t.get('card', 'private', 'timerData', {
           isRunning: false,
-          elapsed: 0,
-          lastStartTime: 0
+          startTime: 0
         });
 
-        let elapsed = 0;
         if (timerData.isRunning) {
-          // Só calcula se startTime for válido
-          if (
-            typeof timerData.lastStartTime === 'number' &&
-            timerData.lastStartTime > 0
-          ) {
-            elapsed = Date.now() - timerData.lastStartTime + (timerData.elapsed || 0);
-          } else {
-            elapsed = timerData.elapsed || 0;
-          }
-        } else {
-          elapsed = timerData.elapsed || 0;
+          const elapsed = Date.now() - timerData.startTime;
+          return [{
+            text: `⏱ ${formatTime(elapsed)}`,
+            color: "green",
+            refresh: 10
+          }];
         }
 
-        // Protege contra NaN
-        if (!Number.isFinite(elapsed) || elapsed < 0) elapsed = 0;
-
         return [{
-          text: `⏱ ${formatTime(elapsed)}`,
-          color: timerData.isRunning ? "green" : "red",
-          refresh: timerData.isRunning ? 10 : 60
+          text: "⏱ Parado",
+          color: "red",
+          refresh: 60
         }];
       } catch (error) {
         console.error("Erro ao carregar:", error);
@@ -70,7 +59,7 @@ window.TrelloPowerUp.initialize(
           refresh: 60
         }];
       }
-    },
+    }
   },
   {
     appKey: TRELLO_TOKEN,

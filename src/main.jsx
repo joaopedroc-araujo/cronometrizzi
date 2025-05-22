@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { TRELLO_TOKEN } from "./components/TimerPopup";
+import { TRELLO_TOKEN } from "./constants";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -87,7 +87,7 @@ window.TrelloPowerUp.initialize(
   },
   {
     appKey: TRELLO_TOKEN,
-    appName: "Teste",
+    appName: "Cronometrizzi",
   }
 );
 

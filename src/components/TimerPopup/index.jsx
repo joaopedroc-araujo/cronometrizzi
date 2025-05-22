@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { TRELLO_TOKEN } from "../../constants";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -10,8 +11,6 @@ function formatTime(ms) {
     "0"
   )}:${String(seconds).padStart(2, "0")}`;
 }
-
-export const TRELLO_TOKEN = "572ff9627c40e50897a1a5bbbf294289";
 
 export const TimerPopup = () => {
   const [isRunning, setIsRunning] = useState(false);
@@ -89,7 +88,6 @@ export const TimerPopup = () => {
 
     t.closePopup();
   };
-
 
   const handleStop = async () => {
     if (elapsed === 0) return;

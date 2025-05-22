@@ -35,22 +35,32 @@ window.TrelloPowerUp.initialize(
       try {
         const timerData = await t.get('card', 'private', 'timerData', {
           isRunning: false,
-          startTime: 0
+          elapsed: 0,
+          lastStartTime: 0
         });
 
+        let elapsed = 0;
         if (timerData.isRunning) {
-          const elapsed = Date.now() - timerData.startTime;
-          return [{
-            text: `⏱ ${formatTime(elapsed)}`,
-            color: "green",
-            refresh: 10
-          }];
+          // Só calcula se startTime for válido
+          if (
+            typeof timerData.lastStartTime === 'number' &&
+            timerData.lastStartTime > 0
+          ) {
+            elapsed = Date.now() - timerData.lastStartTime + (timerData.elapsed || 0);
+          } else {
+            elapsed = timerData.elapsed || 0;
+          }
+        } else {
+          elapsed = timerData.elapsed || 0;
         }
 
+        // Protege contra NaN
+        if (!Number.isFinite(elapsed) || elapsed < 0) elapsed = 0;
+
         return [{
-          text: "⏱ Parado",
-          color: "red",
-          refresh: 60
+          text: `⏱ ${formatTime(elapsed)}`,
+          color: timerData.isRunning ? "green" : "red",
+          refresh: timerData.isRunning ? 10 : 60
         }];
       } catch (error) {
         console.error("Erro ao carregar:", error);
@@ -60,7 +70,7 @@ window.TrelloPowerUp.initialize(
           refresh: 60
         }];
       }
-    }
+    },
   },
   {
     appKey: TRELLO_TOKEN,

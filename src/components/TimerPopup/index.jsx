@@ -67,7 +67,7 @@ export const TimerPopup = () => {
 
       t.render(() => t.sizeTo('#app'));
 
-      setIsRunning(newRunning);
+      setIsRunning(true);
       t.closePopup();
     } catch (error) {
       console.error("Erro ao salvar:", error);

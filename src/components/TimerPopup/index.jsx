@@ -31,7 +31,8 @@ export const TimerPopup = () => {
       try {
         const timerData = await t.get('card', 'private', 'timerData', {
           isRunning: false,
-          startTime: 0
+          startTime: 0,
+          status: "parado"
         });
 
         const currentElapsed = timerData.isRunning
@@ -73,7 +74,6 @@ export const TimerPopup = () => {
         console.error("Erro ao iniciar:", error);
       }
     } else {
-
       try {
         await t.set('card', 'private', 'timerData', {
           isRunning: false,
@@ -92,6 +92,8 @@ export const TimerPopup = () => {
 
 
   const handleStop = async () => {
+    if (elapsed === 0) return;
+
     try {
       await t.set('card', 'private', 'timerData', {
         isRunning: false,
@@ -128,23 +130,21 @@ export const TimerPopup = () => {
           {isRunning ? "Pausar" : "Iniciar"}
         </button>
 
-        {isRunning &&
-          <button
-            onClick={handleStop}
-            style={{
-              background: "#e53935",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontSize: 16,
-              marginTop: 8,
-            }}
-          >
-            Parar
-          </button>
-        }
+        <button
+          onClick={handleStop}
+          style={{
+            background: "#e53935",
+            color: "#fff",
+            border: "none",
+            borderRadius: 4,
+            padding: "8px 16px",
+            cursor: "pointer",
+            fontSize: 16,
+            marginTop: 8,
+          }}
+        >
+          Parar
+        </button>
       </div>
     </div >
   );

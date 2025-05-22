@@ -32,16 +32,22 @@ export const TimerPopup = () => {
       try {
         const timerData = await t.get('card', 'private', 'timerData', {
           isRunning: false,
-          elapsed: 0,
-          lastStartTime: 0
+          startTime: 0
         });
 
+        console.log("Dados do cronômetro:", timerData);
+
+        if (timerData.isRunning) {
+          const currentElapsed = Date.now() - timerData.startTime;
+          setElapsed(currentElapsed);
+          const interval = setInterval(() => {
+            setElapsed(prev => prev + 1000);
+          }, 1000);
+
+          return () => clearInterval(interval);
+        }
+
         setIsRunning(timerData.isRunning);
-        setLastStartTime(timerData.lastStartTime);
-        setElapsed(timerData.isRunning
-          ? Date.now() - timerData.lastStartTime + timerData.elapsed
-          : timerData.elapsed
-        );
       } catch (error) {
         console.error("Erro ao carregar:", error);
       }
@@ -107,19 +113,6 @@ export const TimerPopup = () => {
     t.render(() => t.sizeTo('#app'));
   };
 
-  const handleRestart = async () => {
-    const newLastStartTime = Date.now();
-    await t.set('card', 'private', 'timerData', {
-      isRunning: true,
-      elapsed: 0,
-      lastStartTime: newLastStartTime
-    });
-
-    setIsRunning(true);
-    setElapsed(0);
-    setLastStartTime(newLastStartTime);
-    t.render(() => t.sizeTo('#app'));
-  };
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>
@@ -154,23 +147,6 @@ export const TimerPopup = () => {
             }}
           >
             Pausar
-          </button>
-        )}
-
-        {isRunning && (
-          <button
-            onClick={handleRestart}
-            style={{
-              background: "#1976d2",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontSize: 16,
-            }}
-          >
-            Reiniciar
           </button>
         )}
 

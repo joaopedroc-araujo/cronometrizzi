@@ -1,14 +1,15 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 
 function formatTime(ms) {
-  if (ms == null || isNaN(ms) || ms < 0) return '00:00:00';
   const totalSeconds = Math.floor(ms / 1000);
   const hours = Math.floor(totalSeconds / 3600);
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")}`;
 }
-
 
 export const TRELLO_TOKEN = "572ff9627c40e50897a1a5bbbf294289";
 
@@ -16,15 +17,13 @@ export const TimerPopup = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const [t, setT] = useState(null);
-  const [lastStartTime, setLastStartTime] = useState(0);
-  const intervalRef = useRef();
 
   useEffect(() => {
-    const trelloInstance = window.TrelloPowerUp.iframe({
+    const trelloPowerUp = window.TrelloPowerUp.iframe({
       appKey: TRELLO_TOKEN,
       appName: "Teste",
     });
-    setT(trelloInstance);
+    setT(trelloPowerUp);
   }, []);
 
   useEffect(() => {
@@ -34,7 +33,6 @@ export const TimerPopup = () => {
           isRunning: false,
           startTime: 0
         });
-
         console.log("Dados do cronômetro:", timerData);
 
         if (timerData.isRunning) {
@@ -53,118 +51,52 @@ export const TimerPopup = () => {
       }
     };
 
-    if (t) loadTimerState();
+    loadTimerState();
   }, [t]);
 
-  // Atualiza o cronômetro em tempo real
-  useEffect(() => {
-    if (intervalRef.current) clearInterval(intervalRef.current);
+  const handleToggle = async () => {
+    const newRunning = !isRunning;
+    const newStartTime = newRunning ? Date.now() : 0;
 
-    if (isRunning) {
-      intervalRef.current = setInterval(() => {
-        setElapsed(prevElapsed =>
-          lastStartTime ? Date.now() - lastStartTime + (prevElapsed - (Date.now() - lastStartTime)) : prevElapsed
-        );
-      }, 1000);
-    }
+    try {
+      // Salva estado no próprio card
+      await t.set('card', 'private', 'timerData', {
+        isRunning: newRunning,
+        startTime: newStartTime
+      });
 
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-    };
-  }, [isRunning, lastStartTime]);
+      t.render(() => t.sizeTo('#app'));
 
-  const handleStartPause = async () => {
-    let timerData;
-    if (!isRunning) {
-      // Iniciar
-      timerData = {
-        isRunning: true,
-        elapsed,
-        lastStartTime: Date.now()
-      };
       setIsRunning(true);
-      setLastStartTime(timerData.lastStartTime);
-    } else {
-      // Pausar
-      timerData = {
-        isRunning: false,
-        elapsed: elapsed + (Date.now() - lastStartTime),
-        lastStartTime: 0
-      };
-      setIsRunning(false);
-      setElapsed(timerData.elapsed);
-      setLastStartTime(0);
+      t.closePopup();
+    } catch (error) {
+      console.error("Erro ao salvar:", error);
+      t.alert({
+        message: "Erro ao atualizar o cronômetro!",
+        duration: 5
+      });
     }
-
-    await t.set('card', 'private', 'timerData', timerData);
-    t.render(() => t.sizeTo('#app'));
-  };
-
-  const handleStop = async () => {
-    await t.set('card', 'private', 'timerData', {
-      isRunning: false,
-      elapsed: 0,
-      lastStartTime: 0
-    });
-
-    setIsRunning(false);
-    setElapsed(0);
-    setLastStartTime(0);
-    t.render(() => t.sizeTo('#app'));
   };
 
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>
       <h3>{formatTime(elapsed)}</h3>
-      <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
-        {!isRunning ? (
-          <button
-            onClick={handleStartPause}
-            style={{
-              background: "#43a047",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontSize: 16,
-            }}
-          >
-            Iniciar
-          </button>
-        ) : (
-          <button
-            onClick={handleStartPause}
-            style={{
-              background: "#e53935",
-              color: "#fff",
-              border: "none",
-              borderRadius: 4,
-              padding: "8px 16px",
-              cursor: "pointer",
-              fontSize: 16,
-            }}
-          >
-            Pausar
-          </button>
-        )}
-
-        <button
-          onClick={handleStop}
-          style={{
-            background: "#616161",
-            color: "#fff",
-            border: "none",
-            borderRadius: 4,
-            padding: "8px 16px",
-            cursor: "pointer",
-            fontSize: 16,
-          }}
-        >
-          Parar
-        </button>
-      </div>
+      <button
+        onClick={handleToggle}
+        style={{
+          background: isRunning ? "#e53935" : "#43a047",
+          color: "#fff",
+          border: "none",
+          borderRadius: 4,
+          padding: "8px 16px",
+          cursor: "pointer",
+          fontSize: 16,
+          marginTop: 8,
+        }}
+      >
+        {isRunning ? "Parar" : "Iniciar"}
+      </button>
     </div>
   );
 };

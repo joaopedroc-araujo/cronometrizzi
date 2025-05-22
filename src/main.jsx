@@ -43,7 +43,7 @@ window.TrelloPowerUp.initialize(
           return [{
             text: `⏱ ${formatTime(elapsed)}`,
             color: "green",
-            refresh: 1
+            refresh: 10
           }];
         }
 

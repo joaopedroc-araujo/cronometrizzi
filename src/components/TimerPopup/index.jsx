@@ -1,4 +1,4 @@
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -60,12 +60,12 @@ export const TimerPopup = () => {
 
     try {
       // Salva estado no próprio card
-      const result = await t.set('card', 'private', 'timerData', {
+      await t.set('card', 'private', 'timerData', {
         isRunning: newRunning,
         startTime: newStartTime
       });
 
-      console.log("Dados do cronômetro salvos:", result);
+      t.render(() => t.sizeTo('#app'));
 
       setIsRunning(newRunning);
       t.closePopup();

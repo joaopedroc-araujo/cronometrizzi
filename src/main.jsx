@@ -30,6 +30,21 @@ window.TrelloPowerUp.initialize(
         },
       ];
     },
+    "card-detail-badges": function () {
+      return [
+        {
+          icon: "https://i.imgur.com/9ZZ8rf3.png",
+          text: "Cronômetro",
+          callback: function (t) {
+            return t.popup({
+              title: "Controle do Cronômetro",
+              url: "popup.html",
+              height: 180,
+            });
+          },
+        },
+      ];
+    },
     "card-badges": async (t) => {
       try {
         const timerData = await t.get('card', 'private', 'timerData', {

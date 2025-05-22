@@ -34,23 +34,22 @@ export const TimerPopup = () => {
           startTime: 0
         });
 
+        // [CORREÇÃO] Cálculo universal do elapsed
+        const currentElapsed = timerData.isRunning
+          ? Date.now() - timerData.startTime
+          : timerData.startTime;
+
+        setElapsed(currentElapsed);
+        setIsRunning(timerData.isRunning);
+
+        // [CORREÇÃO] Intervalo dinâmico
         if (timerData.isRunning) {
-          const currentElapsed = timerData.isRunning
-            ? Date.now() - timerData.startTime
-            : timerData.startTime;
-
-          setElapsed(currentElapsed);
-
           const interval = setInterval(() => {
-            setElapsed(Date.now() - timerData.startTime);
+            setElapsed(prev => prev + 1000); // Atualiza incrementalmente
           }, 1000);
 
           return () => clearInterval(interval);
-        } else {
-          setElapsed(timerData.startTime);
         }
-
-        setIsRunning(timerData.isRunning);
       } catch (error) {
         console.error("Erro ao carregar:", error);
       }
@@ -59,38 +58,32 @@ export const TimerPopup = () => {
     t && loadTimerState();
   }, [t]);
 
-  const handleToggle = async () => {
-    if (!isRunning) {
-      const newStartTime = Date.now() - elapsed;
 
-      try {
+  const handleToggle = async () => {
+    const newRunning = !isRunning;
+
+    try {
+      if (newRunning) {
+        // [CORREÇÃO] Iniciar/Continuar
+        const newStartTime = Date.now() - elapsed;
         await t.set('card', 'private', 'timerData', {
           isRunning: true,
           startTime: newStartTime
         });
-
-        setIsRunning(true);
-      }
-      catch (error) {
-        console.error("Erro ao iniciar:", error);
-      }
-    } else {
-
-      try {
+      } else {
+        // [CORREÇÃO] Pausar (salva o tempo atual)
         await t.set('card', 'private', 'timerData', {
           isRunning: false,
-          startTime: elapsed,
+          startTime: elapsed // Salva o tempo decorrido, não um timestamp
         });
-
-        setIsRunning(false);
-      } catch (error) {
-        console.error("Erro ao pausar:", error);
       }
+
+      setIsRunning(newRunning);
+      t.closePopup();
+    } catch (error) {
+      console.error("Erro:", error);
     }
-
-    t.closePopup();
   };
-
 
   const handleStop = async () => {
     try {

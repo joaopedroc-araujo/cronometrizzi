@@ -1,7 +1,6 @@
 // src/main.jsx
 import React from "react";
 import ReactDOM from "react-dom/client";
-import { getSupabaseClient } from "./supabaseClient";
 import { TRELLO_TOKEN } from "./components/TimerPopup";
 
 function formatTime(ms) {
@@ -32,66 +31,36 @@ window.TrelloPowerUp.initialize(
         },
       ];
     },
-    "card-badges": async (t, opts) => {
+    "card-badges": async (t) => {
       try {
-        const cardId = await t.card("id").get("id");
+        const timerData = await t.get('card', 'private', 'timerData', {
+          isRunning: false,
+          startTime: 0
+        });
 
-        const trelloToken = await t.getRestApi().getToken();
-        console.log("Trello Token:", trelloToken);
-        console.log("Card ID:", cardId);
-
-        const supabase = getSupabaseClient(trelloToken, cardId);
-        console.log("Supabase Client:", supabase);
-        const supabaseRpc = await supabase.rpc("set_trello_context");
-        console.log("Context set in Supabase", supabaseRpc);
-
-        const { data, error } = await supabase
-          .from("timers")
-          .select("is_running, start_time")
-          .eq("card_id", cardId)
-          .maybeSingle();
-
-        console.log("Data from Supabase:", data);
-
-        if (error || !data) {
-          return [
-            {
-              text: "⏱ Parado",
-              color: "red",
-              refresh: 60,
-            },
-          ];
+        if (timerData.isRunning) {
+          const elapsed = Date.now() - timerData.startTime;
+          return [{
+            text: `⏱ ${formatTime(elapsed)}`,
+            color: "green",
+            refresh: 1
+          }];
         }
 
-        if (data.is_running && data.start_time) {
-          const elapsed = Date.now() - data.start_time;
-          return [
-            {
-              text: `⏱ ${formatTime(elapsed)}`,
-              color: "green",
-              refresh: 1,
-            },
-          ];
-        }
-
-        return [
-          {
-            text: "⏱ Parado",
-            color: "red",
-            refresh: 60,
-          },
-        ];
+        return [{
+          text: "⏱ Parado",
+          color: "red",
+          refresh: 60
+        }];
       } catch (error) {
-        console.error("Erro no badge:", error);
-        return [
-          {
-            text: "⏱ Erro",
-            color: "yellow",
-            refresh: 60,
-          },
-        ];
+        console.error("Erro ao carregar:", error);
+        return [{
+          text: "⏱ Erro",
+          color: "yellow",
+          refresh: 60
+        }];
       }
-    },
+    }
   },
   {
     appKey: TRELLO_TOKEN,

@@ -36,6 +36,7 @@ export const TimerPopup = () => {
           lastStartTime: 0
         });
 
+        console.log("Dados do cronômetro:", timerData);
         if (timerData.isRunning) {
           const currentElapsed = Date.now() - timerData.lastStartTime + timerData.elapsed;
           setElapsed(currentElapsed);
@@ -126,7 +127,22 @@ export const TimerPopup = () => {
             fontSize: 16,
           }}
         >
-          {isRunning ? "Pausar" : "Iniciar"}
+          Iniciar
+        </button>
+
+        <button
+          onClick={handleStop}
+          style={{
+            background: "#616161",
+            color: "#fff",
+            border: "none",
+            borderRadius: 4,
+            padding: "8px 16px",
+            cursor: "pointer",
+            fontSize: 16,
+          }}
+        >
+          Parar
         </button>
 
         {isRunning && (
@@ -146,20 +162,6 @@ export const TimerPopup = () => {
           </button>
         )}
 
-        <button
-          onClick={handleStop}
-          style={{
-            background: "#616161",
-            color: "#fff",
-            border: "none",
-            borderRadius: 4,
-            padding: "8px 16px",
-            cursor: "pointer",
-            fontSize: 16,
-          }}
-        >
-          Parar
-        </button>
       </div>
     </div>
   );

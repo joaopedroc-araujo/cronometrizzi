@@ -9,7 +9,7 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: "./index.html",
-        popup: "./popup.html", // Se você tiver um popup.html separado
+        popup: "./popup.html",
         auth: "./auth.html",
       },
     },

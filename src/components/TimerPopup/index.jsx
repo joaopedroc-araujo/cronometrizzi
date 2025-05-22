@@ -56,8 +56,6 @@ export const TimerPopup = () => {
     t && loadTimerState();
   }, [t]);
 
-
-
   const handleToggle = async () => {
     if (!isRunning) {
       const newStartTime = Date.now() - elapsed;
@@ -65,7 +63,8 @@ export const TimerPopup = () => {
       try {
         await t.set('card', 'private', 'timerData', {
           isRunning: true,
-          startTime: newStartTime
+          startTime: newStartTime,
+          status: "rodando"
         });
 
         setIsRunning(true);
@@ -79,6 +78,7 @@ export const TimerPopup = () => {
         await t.set('card', 'private', 'timerData', {
           isRunning: false,
           startTime: elapsed,
+          status: "pausado"
         });
 
         setIsRunning(false);
@@ -95,7 +95,8 @@ export const TimerPopup = () => {
     try {
       await t.set('card', 'private', 'timerData', {
         isRunning: false,
-        startTime: 0
+        startTime: 0,
+        status: "parado"
       });
 
       setElapsed(0);

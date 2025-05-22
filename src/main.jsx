@@ -34,10 +34,11 @@ window.TrelloPowerUp.initialize(
       try {
         const timerData = await t.get('card', 'private', 'timerData', {
           isRunning: false,
-          startTime: 0
+          startTime: 0,
+          status: "parado"
         });
 
-        if (timerData.isRunning) {
+        if (timerData.isRunning && timerData.status === "rodando") {
           const elapsed = Date.now() - timerData.startTime;
           return [{
             text: `⏱ ${formatTime(elapsed)}`,
@@ -46,8 +47,16 @@ window.TrelloPowerUp.initialize(
           }];
         }
 
+        if (!timerData.isRunning && timerData.status === "pausado") {
+          return [{
+            text: `⏸ Pausado (${formatTime(timerData.startTime)})`,
+            color: "yellow",
+            refresh: 60
+          }];
+        }
+
         return [{
-          text: "⏱ Parado",
+          text: "⏹ Parado",
           color: "red",
           refresh: 60
         }];

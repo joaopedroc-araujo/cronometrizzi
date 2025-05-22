@@ -1,16 +1,16 @@
 import { useEffect, useState } from "react";
 
 function formatTime(ms) {
-  if (ms < 0) ms = 0;
   const totalSeconds = Math.floor(ms / 1000);
-  const clampedSeconds = Math.min(totalSeconds, 99 * 3600 + 59 * 60 + 59);
-
-  const hours = Math.floor(clampedSeconds / 3600);
-  const minutes = Math.floor((clampedSeconds % 3600) / 60);
-  const seconds = clampedSeconds % 60;
-
-  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  return `${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+    2,
+    "0"
+  )}:${String(seconds).padStart(2, "0")}`;
 }
+
 export const TRELLO_TOKEN = "572ff9627c40e50897a1a5bbbf294289";
 
 export const TimerPopup = () => {
@@ -34,7 +34,6 @@ export const TimerPopup = () => {
           startTime: 0
         });
 
-        // [CORREÇÃO] Cálculo universal do elapsed
         const currentElapsed = timerData.isRunning
           ? Date.now() - timerData.startTime
           : timerData.startTime;
@@ -42,10 +41,9 @@ export const TimerPopup = () => {
         setElapsed(currentElapsed);
         setIsRunning(timerData.isRunning);
 
-        // [CORREÇÃO] Intervalo dinâmico
         if (timerData.isRunning) {
           const interval = setInterval(() => {
-            setElapsed(prev => prev + 1000); // Atualiza incrementalmente
+            setElapsed(Date.now() - timerData.startTime);
           }, 1000);
 
           return () => clearInterval(interval);
@@ -59,31 +57,39 @@ export const TimerPopup = () => {
   }, [t]);
 
 
-  const handleToggle = async () => {
-    const newRunning = !isRunning;
 
-    try {
-      if (newRunning) {
-        // [CORREÇÃO] Iniciar/Continuar
-        const newStartTime = Date.now() - elapsed;
+  const handleToggle = async () => {
+    if (!isRunning) {
+      const newStartTime = Date.now() - elapsed;
+
+      try {
         await t.set('card', 'private', 'timerData', {
           isRunning: true,
           startTime: newStartTime
         });
-      } else {
-        // [CORREÇÃO] Pausar (salva o tempo atual)
+
+        setIsRunning(true);
+      }
+      catch (error) {
+        console.error("Erro ao iniciar:", error);
+      }
+    } else {
+
+      try {
         await t.set('card', 'private', 'timerData', {
           isRunning: false,
-          startTime: elapsed // Salva o tempo decorrido, não um timestamp
+          startTime: elapsed,
         });
-      }
 
-      setIsRunning(newRunning);
-      t.closePopup();
-    } catch (error) {
-      console.error("Erro:", error);
+        setIsRunning(false);
+      } catch (error) {
+        console.error("Erro ao pausar:", error);
+      }
     }
+
+    t.closePopup();
   };
+
 
   const handleStop = async () => {
     try {
@@ -99,8 +105,6 @@ export const TimerPopup = () => {
       console.error("Erro ao parar:", error);
     }
   };
-
-  console.log(elapsed);
 
   return (
     <div style={{ padding: 16, textAlign: "center" }}>

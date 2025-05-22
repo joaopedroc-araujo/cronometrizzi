@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 
 function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
@@ -16,19 +16,24 @@ export const TRELLO_TOKEN = "572ff9627c40e50897a1a5bbbf294289";
 export const TimerPopup = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
-  const t = window.TrelloPowerUp.iframe({
-    appKey: TRELLO_TOKEN,
-    appName: "Teste",
-  });
+  const [t, setT] = useState(null);
+
+  useEffect(() => {
+    const trelloPowerUp = window.TrelloPowerUp.iframe({
+      appKey: TRELLO_TOKEN,
+      appName: "Teste",
+    });
+    setT(trelloPowerUp);
+  }, []);
 
   useEffect(() => {
     const loadTimerState = async () => {
       try {
-        // Recupera dados do card
         const timerData = await t.get('card', 'private', 'timerData', {
           isRunning: false,
           startTime: 0
         });
+        console.log("Dados do cronômetro:", timerData);
 
         if (timerData.isRunning) {
           const currentElapsed = Date.now() - timerData.startTime;
@@ -47,7 +52,7 @@ export const TimerPopup = () => {
     };
 
     loadTimerState();
-  }, []);
+  }, [t]);
 
   const handleToggle = async () => {
     const newRunning = !isRunning;
@@ -55,10 +60,12 @@ export const TimerPopup = () => {
 
     try {
       // Salva estado no próprio card
-      await t.set('card', 'private', 'timerData', {
+      const result = await t.set('card', 'private', 'timerData', {
         isRunning: newRunning,
         startTime: newStartTime
       });
+
+      console.log("Dados do cronômetro salvos:", result);
 
       setIsRunning(newRunning);
       t.closePopup();

@@ -11,6 +11,8 @@ function formatTime(ms) {
   )}:${String(seconds).padStart(2, "0")}`;
 }
 
+export const TRELLO_TOKEN = "572ff9627c40e50897a1a5bbbf294289";
+
 export const TimerPopup = () => {
   const [isRunning, setIsRunning] = useState(false);
   const [elapsed, setElapsed] = useState(0);
@@ -19,7 +21,7 @@ export const TimerPopup = () => {
 
   useEffect(() => {
     const trelloInstance = window.TrelloPowerUp.iframe({
-      appKey: "572ff9627c40e50897a1a5bbbf294289",
+      appKey: ,
       appName: "Teste",
     });
     setT(trelloInstance);
